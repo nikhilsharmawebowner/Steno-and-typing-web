@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steno & Typing Software</title>
+    <!-- Hindi Web Fonts Embed -->
+    <link href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi&display=swap" rel="stylesheet">
+    <style>
+        @font-face { font-family: 'KrutiDev'; src: local('Kruti Dev 010'), url('https://fonts.cdnfonts.com/s/18151/KrutiDev010.woff') format('woff'); }
+        @font-face { font-family: 'Devlys'; src: local('Devlys 010'), url('https://fonts.cdnfonts.com/s/18151/Devlys010.woff') format('woff'); }
+
+        body { font-family: Arial, sans-serif; background: #eef2f5; margin: 0; padding: 20px; }
+        .hidden { display: none !important; }
+
+        /* Login Card */
+        .login-card { background: #ffffff; padding: 30px 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); width: 340px; margin: 80px auto; }
+        .login-card h2 { margin-top: 0; text-align: center; color: #333; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 13px; color: #555; }
+        .input-wrapper { position: relative; display: flex; align-items: center; }
+        .input-wrapper input, select, textarea { width: 100%; padding: 9px 35px 9px 9px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; box-sizing: border-box; }
+        .toggle-icon { position: absolute; right: 10px; cursor: pointer; user-select: none; }
+        
+        button { width: 100%; padding: 10px; background: #007bff; border: none; border-radius: 5px; color: white; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        button:hover { background: #0056b3; }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #218838; }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #bd2130; }
+        .btn-warning { background: #ffc107; color: #212529; }
+        .btn-warning:hover { background: #e0a800; }
+
+        /* Container & Sections */
+        .container { max-width: 1300px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ddd; padding-bottom: 10px; margin-bottom: 20px; }
+        
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+        .task-bar-card { background: #eef7ff; border: 1px solid #b6d4fe; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+        .credentials-card { background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+
+        /* Table Styling */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: middle; }
+        th { background: #007bff; color: white; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        .fee-badge { background: #e2e3e5; padding: 3px 6px; border-radius: 4px; font-size: 11px; display: inline-block; margin: 2px 0; }
+        
+        .page-box { border: 2px dashed #007bff; padding: 20px; text-align: left; background: #fafafa; margin-top: 20px; }
+
+        /* Student Photo Styles */
+        .photo-preview { width: 60px; height: 60px; object-fit: cover; border-radius: 5px; border: 1px solid #ccc; background: #eee; display: block; margin-bottom: 5px; }
+
+        /* Result Badge */
+        .result-box { background: #e2e3e5; border-left: 4px solid #007bff; padding: 10px; margin-top: 10px; border-radius: 4px; }
+
+        /* Fonts for Typing Area */
+        .font-mangal { font-family: 'Tiro Devanagari Hindi', 'Arial', sans-serif !important; }
+        .font-krutidev { font-family: 'KrutiDev', 'Kruti Dev 010', sans-serif !important; }
+        .font-devlys { font-family: 'Devlys', 'Devlys 010', sans-serif !important; }
+
+        /* DICTATION HIGHLIGHT & WORD COUNT BADGE STYLES */
+        .dictation-word { display: inline-block; margin: 0 2px; padding: 1px 3px; border-radius: 3px; font-size: 18px; line-height: 1.8; }
+        .highlight-active { background-color: #ffeb3b !important; color: #000 !important; font-weight: bold; transform: scale(1.05); }
+        .word-count-badge { background-color: #6f42c1; color: white; font-weight: bold; border-radius: 12px; padding: 2px 8px; font-size: 12px; margin: 0 4px; display: inline-block; vertical-align: middle; }
+    </style>
+</head>
+<body>
+
+<!-- PAGE 1: LOGIN -->
+<div id="loginPage" class="login-card">
+    <h2>Portal Login</h2>
+    <div class="input-group">
+        <label>User / Student ID</label>
+        <div class="input-wrapper"><input type="text" id="userId" placeholder="Enter ID"></div>
+    </div>
+    <div class="input-group">
+        <label>Password</label>
+        <div class="input-wrapper">
+            <input type="password" id="userPass" placeholder="Enter Password">
+            <span class="toggle-icon" id="icon1" onclick="toggleVisibility('userPass', 'icon1')">👁️</span>
+        </div>
+    </div>
+    <button onclick="handleLogin()">Login</button>
+</div>
+
+<!-- PAGE 2: OWNER DASHBOARD -->
+<div id="ownerDashboard" class="container hidden">
+    <div class="header">
+        <h2>Owner Dashboard (Page 2)</h2>
+        <button style="width: auto; background: #dc3545;" onclick="logout()">Logout</button>
+    </div>
+
+    <!-- CHANGE OWNER ID & PASS -->
+    <div class="credentials-card">
+        <h3>Change Owner ID & Password</h3>
+        <div class="form-grid" style="background: transparent; padding: 0;">
+            <div><label>New Owner ID</label><input type="text" id="changeOwnerId" placeholder="New ID"></div>
+            <div><label>New Owner Password</label><input type="text" id="changeOwnerPass" placeholder="New Password"></div>
+            <div><label>&nbsp;</label><button class="btn-warning" onclick="updateOwnerCredentials()">Update Credentials</button></div>
+        </div>
+    </div>
+
+    <!-- ADD STUDENT FORM -->
+    <div class="task-bar-card" style="background: #fff; border-color: #007bff;">
+        <h3>Add New Student</h3>
+        <div class="form-grid" style="background: transparent; padding: 0;">
+            <div><label>Student ID</label><input type="text" id="stId" placeholder="ID"></div>
+            <div><label>Password</label><input type="text" id="stPass" placeholder="Pass"></div>
+            <div><label>Name</label><input type="text" id="stName" placeholder="Full Name"></div>
+            <div><label>Course</label><input type="text" id="stCourse" placeholder="Course"></div>
+            <div><label>Contact</label><input type="text" id="stContact" placeholder="Phone"></div>
+            <div><label>Qualification</label><input type="text" id="stQual" placeholder="Qualification"></div>
+            <div><label>Total Fee (₹)</label><input type="number" id="stTotalFee" placeholder="Total Fee"></div>
+            <div><label>Initial Paid Fee (₹)</label><input type="number" id="stPaidFee" placeholder="First Installment"></div>
+            <div><label>&nbsp;</label><button class="btn-success" onclick="addStudent()">Add Student</button></div>
+        </div>
+    </div>
+
+    <!-- TASKBAR: TEST MODE NAVIGATION -->
+    <div class="task-bar-card" style="background: #eafbe7; border-color: #a3e09e;">
+        <h3>Task Bar: Test Mode Navigation</h3>
+        <div class="form-grid" style="background: transparent; padding: 0;">
+            <div>
+                <label>Select Test Mode</label>
+                <select id="ownerNavigationMode">
+                    <option value="4">Column 1: Hindi Steno (Go to Page 4)</option>
+                    <option value="5">Column 2: Hindi Typing (Go to Page 5)</option>
+                    <option value="6">Column 3: English Steno (Go to Page 6)</option>
+                    <option value="7">Column 4: English Typing (Go to Page 7)</option>
+                </select>
+            </div>
+            <div><label>&nbsp;</label><button class="btn-success" onclick="navigateFromOwner()">Enter Test Mode Page</button></div>
+        </div>
+    </div>
+
+    <!-- TASKBAR: PARAGRAPH MANAGEMENT WITH FILE UPLOAD FEATURE -->
+    <div class="task-bar-card">
+        <h3>Task Bar: Add & Remove Paragraph (Direct Text or File Upload)</h3>
+        <div class="form-grid" style="background: transparent; padding: 0;">
+            <div>
+                <label>Category</label>
+                <select id="paraCategory">
+                    <option value="Hindi Steno">Column 1: Hindi Steno</option>
+                    <option value="Hindi Typing">Column 2: Hindi Typing</option>
+                    <option value="English Steno">Column 3: English Steno</option>
+                    <option value="English Typing">Column 4: English Typing</option>
+                </select>
+            </div>
+            <div><label>Title</label><input type="text" id="paraTitle" placeholder="Paragraph Title"></div>
+            <div>
+                <label>Upload File (.txt, .docx, .json)</label>
+                <input type="file" id="paraFileInput" accept=".txt,.json,.docx" onchange="handleFileUpload(event)">
+            </div>
+            <div style="grid-column: span 3;">
+                <label>Content (Upload se text auto-fill ho jayega ya yahan paste karein)</label>
+                <textarea id="paraContent" rows="3" placeholder="Paste paragraph text or upload file..."></textarea>
+            </div>
+        </div>
+        <button class="btn-success" onclick="saveParagraph()">Save Paragraph</button>
+
+        <h4 style="margin-top:20px;">Saved Paragraphs</h4>
+        <table>
+            <thead><tr><th>Category</th><th>Title</th><th>Preview</th><th>Action</th></tr></thead>
+            <tbody id="paragraphTableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- STUDENT LIST TABLE -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h3>Student List & Fee History</h3>
+        <button class="btn-danger" style="width: auto;" onclick="deleteSelectedStudents()">Delete Selected</button>
+    </div>
+    <div style="overflow-x:auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th><input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)"></th>
+                    <th>Photo</th>
+                    <th>ID / Pass</th>
+                    <th>Name</th>
+                    <th>Course</th>
+                    <th>Contact</th>
+                    <th>Qual.</th>
+                    <th>Total Fee</th>
+                    <th>Add Fee</th>
+                    <th>History</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="studentTableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- PAGE 3: STUDENT DASHBOARD -->
+<div id="studentDashboard" class="container hidden">
+    <div class="header">
+        <h2 id="studentWelcome">Student Dashboard (Page 3)</h2>
+        <button style="width: auto; background: #dc3545;" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="task-bar-card" style="background: #eafbe7; border-color: #a3e09e;">
+        <h3>Select Your Test Mode</h3>
+        <div class="form-grid" style="background: transparent; padding: 0;">
+            <div>
+                <label>Select Category</label>
+                <select id="studentNavigationMode">
+                    <option value="4">Column 1: Hindi Steno (Go to Page 4)</option>
+                    <option value="5">Column 2: Hindi Typing (Go to Page 5)</option>
+                    <option value="6">Column 3: English Steno (Go to Page 6)</option>
+                    <option value="7">Column 4: English Typing (Go to Page 7)</option>
+                </select>
+            </div>
+            <div><label>&nbsp;</label><button class="btn-success" onclick="navigateFromStudent()">Enter Test Mode Page</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- PAGE 4: HINDI STENO (UPDATED WITH HIGHLIGHT & 20-WORD COUNT BADGES) -->
+<div id="page4" class="container hidden">
+    <div class="header">
+        <h2>Page 4: Hindi Steno Test & Dictation</h2>
+        <button style="width:auto;" onclick="backToDashboard()">Back to Dashboard</button>
+    </div>
+
+    <!-- FOUR COLUMNS CONTROL PANEL -->
+    <div class="form-grid" style="background: #f0f7ff; border: 1px solid #cce5ff;">
+        <div>
+            <label style="color:#0056b3;"><b>Column 1: Select Paragraph</b></label>
+            <select id="stenoParaSelect" onchange="loadSelectedStenoPara()">
+                <option value="">-- Choose Paragraph --</option>
+            </select>
+        </div>
+
+        <div>
+            <label style="color:#0056b3;"><b>Column 2: Dictation Speed</b></label>
+            <select id="stenoSpeedSelect"></select>
+        </div>
+
+        <div>
+            <label style="color:#0056b3;"><b>Column 3: Word Limit</b></label>
+            <select id="stenoWordLimitSelect" onchange="applyWordLimitToPara()"></select>
+        </div>
+
+        <div>
+            <label style="color:#0056b3;"><b>Column 4: Select Hindi Font</b></label>
+            <select id="stenoFontSelect" onchange="changeTypingFont()">
+                <option value="font-mangal">Mangal (Unicode / Inscript)</option>
+                <option value="font-krutidev">Kruti Dev 010 (Remington)</option>
+                <option value="font-devlys">Devlys 010</option>
+                <option value="font-mangal">Remington CBI (Mangal)</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- DICTATION & PRACTICE SECTION -->
+    <div class="page-box">
+        <h3>Paragraph Dictation Player Box</h3>
+        <p><b>Dictation Text Preview (Har 20 words par Purple badge hai, dictation sound ke sath Yellow highlight hoga):</b></p>
+        <div id="p4DictationText" style="background: white; padding: 15px; border: 1px solid #ccc; border-radius: 5px; min-height: 100px; max-height: 200px; overflow-y: auto;">
+            <em>Kripya Column 1 se paragraph select karein...</em>
+        </div>
+
+        <div style="margin-top: 15px; display: flex; gap: 10px; align-items: center;">
+            <button class="btn-success" style="width: auto; padding: 8px 16px;" onclick="startDictationAudio()">▶️ Play Dictation Audio</button>
+            <button class="btn-danger" style="width: auto; padding: 8px 16px;" onclick="stopDictationAudio()">⏹️ Stop Audio</button>
+        </div>
+
+        <hr style="margin: 20px 0;">
+
+        <!-- RE-TYPE BOX FOR ACCURACY CHECKING -->
+        <h3>Re-Type Box (Type Steno Notes Here in Hindi)</h3>
+        <p><small>Audio dictation sunkar banayi gayi steno ko yahan re-type karein:</small></p>
+        <textarea id="p4ReTypeArea" class="font-mangal" rows="6" placeholder="Yahan re-typing start karein..." style="width: 100%; border: 1px solid #999; padding: 10px; border-radius: 5px; font-size: 16px;"></textarea>
+
+        <button class="btn-warning" style="margin-top: 10px; font-weight: bold;" onclick="calculateStenoAccuracy()">Check Accuracy & Mistakes</button>
+
+        <div id="p4ResultBox" class="result-box hidden">
+            <h4>Performance Result:</h4>
+            <div id="p4ResultDetails"></div>
+        </div>
+    </div>
+</div>
+
+<!-- PAGES 5, 6, 7 -->
+<div id="page5" class="container hidden"><div class="header"><h2>Page 5: Hindi Typing</h2><button style="width:auto;" onclick="backToDashboard()">Back</button></div><div class="page-box"><h3>Page 5 Content</h3></div></div>
+<div id="page6" class="container hidden"><div class="header"><h2>Page 6: English Steno</h2><button style="width:auto;" onclick="backToDashboard()">Back</button></div><div class="page-box"><h3>Page 6 Content</h3></div></div>
+<div id="page7" class="container hidden"><div class="header"><h2>Page 7: English Typing</h2><button style="width:auto;" onclick="backToDashboard()">Back</button></div><div class="page-box"><h3>Page 7 Content</h3></div></div>
+
+<script>
+    let ownerCreds = JSON.parse(localStorage.getItem('app_owner_creds')) || { id: 'new owner', pass: 'new1234' };
+    let students = JSON.parse(localStorage.getItem('app_students')) || [];
+    let paragraphs = JSON.parse(localStorage.getItem('app_paragraphs')) || [
+        { id: 1, category: 'Hindi Steno', title: 'Sample Hindi Steno 1', content: 'भारत एक महान देश है। यहाँ की संस्कृति और परंपराएँ दुनिया भर में प्रसिद्ध हैं। स्टेनोग्राफी सीखना एक कला है जो निरंतर अभ्यास से आती है। मेहनत और निष्ठा से हर लक्ष्य को प्राप्त किया जा सकता है। हमारे देश में विभिन्न भाषाएँ और बोलियाँ बोली जाती हैं फिर भी एकता और अखंडता बनी रहती है। शिक्षा ही उन्नति की वास्तविक चाबी है जो समाज को सही दिशा प्रदान करती है।' }
+    ];
+    let currentUserRole = '';
+    let currentRawWords = [];
+    let speechUtterance = null;
+
+    window.onload = function() {
+        renderStudents();
+        renderParagraphs();
+        populateSpeedDropdown();
+        populateWordLimitDropdown();
+        loadStenoParagraphs();
+    };
+
+    function toggleVisibility(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if (input.type === "password") { input.type = "text"; icon.innerText = "🙈"; } 
+        else { input.type = "password"; icon.innerText = "👁️"; }
+    }
+
+    // LOGIN & NAVIGATION
+    function handleLogin() {
+        const idInput = document.getElementById('userId').value.trim();
+        const passInput = document.getElementById('userPass').value.trim();
+
+        if (idInput.toLowerCase() === ownerCreds.id.toLowerCase() && passInput === ownerCreds.pass) {
+            hideAllPages();
+            currentUserRole = 'owner';
+            document.getElementById('ownerDashboard').classList.remove('hidden');
+            return;
+        }
+
+        const matchedStudent = students.find(s => s.studentId.trim() === idInput && s.password.trim() === passInput);
+        if (matchedStudent) {
+            hideAllPages();
+            currentUserRole = 'student';
+            document.getElementById('studentWelcome').innerText = `Welcome, ${matchedStudent.name} (Page 3)`;
+            document.getElementById('studentDashboard').classList.remove('hidden');
+        } else { alert('Galat ID ya Password!'); }
+    }
+
+    function logout() {
+        document.getElementById('userId').value = '';
+        document.getElementById('userPass').value = '';
+        hideAllPages();
+        document.getElementById('loginPage').classList.remove('hidden');
+    }
+
+    function hideAllPages() {
+        ['loginPage', 'ownerDashboard', 'studentDashboard', 'page4', 'page5', 'page6', 'page7'].forEach(p => {
+            document.getElementById(p).classList.add('hidden');
+        });
+    }
+
+    function backToDashboard() {
+        stopDictationAudio();
+        hideAllPages();
+        if (currentUserRole === 'owner') document.getElementById('ownerDashboard').classList.remove('hidden');
+        else document.getElementById('studentDashboard').classList.remove('hidden');
+    }
+
+    function navigateFromOwner() {
+        const pageNum = document.getElementById('ownerNavigationMode').value;
+        hideAllPages();
+        document.getElementById(`page${pageNum}`).classList.remove('hidden');
+    }
+
+    function navigateFromStudent() {
+        const pageNum = document.getElementById('studentNavigationMode').value;
+        hideAllPages();
+        document.getElementById(`page${pageNum}`).classList.remove('hidden');
+    }
+
+    // PAGE 2 OWNER FUNCTIONS WITH FILE UPLOAD
+    function handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('paraContent').value = e.target.result;
+            if(!document.getElementById('paraTitle').value) {
+                document.getElementById('paraTitle').value = file.name.replace(/\.[^/.]+$/, "");
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function updateOwnerCredentials() {
+        const newId = document.getElementById('changeOwnerId').value.trim();
+        const newPass = document.getElementById('changeOwnerPass').value.trim();
+        if (newId && newPass) {
+            ownerCreds = { id: newId, pass: newPass };
+            localStorage.setItem('app_owner_creds', JSON.stringify(ownerCreds));
+            alert('Owner ID & Password badal gaye hain!');
+        } else { alert('Kripya dono fill karein!'); }
+    }
+
+    function addStudent() {
+        const stId = document.getElementById('stId').value.trim();
+        const stPass = document.getElementById('stPass').value.trim();
+        const name = document.getElementById('stName').value.trim();
+        const course = document.getElementById('stCourse').value.trim();
+        const contact = document.getElementById('stContact').value.trim();
+        const qual = document.getElementById('stQual').value.trim();
+        const totalFee = parseFloat(document.getElementById('stTotalFee').value) || 0;
+        const paidFee = parseFloat(document.getElementById('stPaidFee').value) || 0;
+
+        if (!stId || !stPass || !name) { alert('Student ID, Password aur Name zaroori hai!'); return; }
+
+        const feeHistory = paidFee > 0 ? [{ amount: paidFee, date: new Date().toLocaleDateString('en-IN') }] : [];
+        students.push({ id: Date.now(), studentId: stId, password: stPass, name, course, contact, qual, totalFee, paidFee, feeHistory, status: 'Active', photo: '' });
+        localStorage.setItem('app_students', JSON.stringify(students));
+        renderStudents();
+        alert('Student Add Ho Gaya!');
+    }
+
+    function renderStudents() {
+        const tbody = document.getElementById('studentTableBody');
+        tbody.innerHTML = '';
+        students.forEach((s) => {
+            const historyHtml = s.feeHistory.map(h => `<span class="fee-badge">₹${h.amount} (${h.date})</span>`).join('<br>');
+            tbody.innerHTML += `
+                <tr>
+                    <td><input type="checkbox" class="st-select" value="${s.id}"></td>
+                    <td><img src="${s.photo || 'https://via.placeholder.com/60'}" class="photo-preview"></td>
+                    <td><b>ID:</b> ${s.studentId}<br><b>P:</b> ${s.password}</td>
+                    <td>${s.name}</td>
+                    <td>${s.course}</td>
+                    <td>${s.contact}</td>
+                    <td>${s.qual}</td>
+                    <td>₹${s.totalFee}<br><small style="color:green;">Paid: ₹${s.paidFee}</small></td>
+                    <td><input type="number" id="feeInput_${s.id}" style="width:70px;"><button class="btn-success" onclick="addFee(${s.id})">Add</button></td>
+                    <td>${historyHtml}</td>
+                    <td><button class="btn-danger" onclick="deleteStudent(${s.id})">Delete</button></td>
+                </tr>
+            `;
+        });
+    }
+
+    function addFee(id) {
+        const amt = parseFloat(document.getElementById(`feeInput_${id}`).value);
+        if (!amt) return;
+        const s = students.find(x => x.id === id);
+        s.paidFee += amt;
+        s.feeHistory.push({ amount: amt, date: new Date().toLocaleDateString('en-IN') });
+        localStorage.setItem('app_students', JSON.stringify(students));
+        renderStudents();
+    }
+
+    function deleteStudent(id) {
+        students = students.filter(s => s.id !== id);
+        localStorage.setItem('app_students', JSON.stringify(students));
+        renderStudents();
+    }
+
+    function saveParagraph() {
+        const cat = document.getElementById('paraCategory').value;
+        const title = document.getElementById('paraTitle').value.trim();
+        const content = document.getElementById('paraContent').value.trim();
+        if (!title || !content) { alert('Title aur Content zaroori hai!'); return; }
+        paragraphs.push({ id: Date.now(), category: cat, title, content });
+        localStorage.setItem('app_paragraphs', JSON.stringify(paragraphs));
+        renderParagraphs();
+        loadStenoParagraphs();
+        alert('Paragraph Save Ho Gaya!');
+    }
+
+    function renderParagraphs() {
+        const tbody = document.getElementById('paragraphTableBody');
+        tbody.innerHTML = '';
+        paragraphs.forEach(p => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${p.category}</td>
+                    <td>${p.title}</td>
+                    <td>${p.content.substring(0, 40)}...</td>
+                    <td><button class="btn-danger" onclick="deleteParagraph(${p.id})">Delete</button></td>
+                </tr>
+            `;
+        });
+    }
+
+    function deleteParagraph(id) {
+        paragraphs = paragraphs.filter(p => p.id !== id);
+        localStorage.setItem('app_paragraphs', JSON.stringify(paragraphs));
+        renderParagraphs();
+        loadStenoParagraphs();
+    }
+
+    // PAGE 4 (HINDI STENO & HIGHLIGHTING) FUNCTIONS
+    function changeTypingFont() {
+        const selectedFontClass = document.getElementById('stenoFontSelect').value;
+        document.getElementById('p4ReTypeArea').className = selectedFontClass;
+    }
+
+    function populateSpeedDropdown() {
+        const select = document.getElementById('stenoSpeedSelect');
+        select.innerHTML = '';
+        for (let speed = 30; speed <= 180; speed += 10) {
+            select.innerHTML += `<option value="${speed}">${speed} WPM</option>`;
+        }
+    }
+
+    function populateWordLimitDropdown() {
+        const select = document.getElementById('stenoWordLimitSelect');
+        select.innerHTML = '';
+        for (let words = 200; words <= 2000; words += 100) {
+            select.innerHTML += `<option value="${words}">${words} Words</option>`;
+        }
+    }
+
+    function loadStenoParagraphs() {
+        const select = document.getElementById('stenoParaSelect');
+        select.innerHTML = '<option value="">-- Choose Paragraph --</option>';
+        const hindiStenoParas = paragraphs.filter(p => p.category === 'Hindi Steno');
+        
+        hindiStenoParas.forEach((p) => {
+            select.innerHTML += `<option value="${p.id}">${p.title}</option>`;
+        });
+    }
+
+    function loadSelectedStenoPara() {
+        const paraId = document.getElementById('stenoParaSelect').value;
+        const selectedPara = paragraphs.find(p => p.id == paraId);
+        
+        if (selectedPara) {
+            currentRawWords = selectedPara.content.trim().split(/\s+/);
+            applyWordLimitToPara();
+        } else {
+            document.getElementById('p4DictationText').innerHTML = '<em>Kripya Column 1 se paragraph select karein...</em>';
+            currentRawWords = [];
+        }
+    }
+
+    function applyWordLimitToPara() {
+        if (!currentRawWords.length) return;
+        const limit = parseInt(document.getElementById('stenoWordLimitSelect').value);
+        const limitedWords = currentRawWords.slice(0, limit);
+        
+        let containerHtml = '';
+        limitedWords.forEach((word, index) => {
+            const wordNum = index + 1;
+            containerHtml += `<span class="dictation-word" id="word_${index}">${word}</span> `;
+            
+            // Add Count Marker Badge every 20 words (e.g. [20], [40], [60])
+            if (wordNum % 20 === 0) {
+                containerHtml += `<span class="word-count-badge">[${wordNum}]</span> `;
+            }
+        });
+
+        document.getElementById('p4DictationText').innerHTML = containerHtml;
+    }
+
+    function startDictationAudio() {
+        const dictationBox = document.getElementById('p4DictationText');
+        const wordSpans = dictationBox.querySelectorAll('.dictation-word');
+        
+        if (!wordSpans.length) {
+            alert('Pehle ek Paragraph select karein!');
+            return;
+        }
+
+        // Prepare clean text for Speech (excluding [20] badges)
+        let fullTextToSpeak = Array.from(wordSpans).map(span => span.innerText).join(' ');
+
+        window.speechSynthesis.cancel();
+        speechUtterance = new SpeechSynthesisUtterance(fullTextToSpeak);
+        speechUtterance.lang = 'hi-IN';
+        
+        const speedWpm = parseInt(document.getElementById('stenoSpeedSelect').value);
+        speechUtterance.rate = 0.5 + ((speedWpm - 30) / 150) * 1.5;
+
+        // Word Boundary Highlight Event
+        speechUtterance.onboundary = function(event) {
+            if (event.name === 'word') {
+                const charIndex = event.charIndex;
+                let runningLength = 0;
+
+                wordSpans.forEach((span, idx) => {
+                    span.classList.remove('highlight-active');
+                    const wordLength = span.innerText.length + 1; // including space
+                    if (charIndex >= runningLength && charIndex < runningLength + wordLength) {
+                        span.classList.add('highlight-active');
+                        span.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    runningLength += wordLength;
+                });
+            }
+        };
+
+        speechUtterance.onend = function() {
+            wordSpans.forEach(span => span.classList.remove('highlight-active'));
+        };
+
+        window.speechSynthesis.speak(speechUtterance);
+    }
+
+    function stopDictationAudio() {
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        const wordSpans = document.querySelectorAll('.dictation-word');
+        wordSpans.forEach(span => span.classList.remove('highlight-active'));
+    }
+
+    function calculateStenoAccuracy() {
+        const wordSpans = document.querySelectorAll('.dictation-word');
+        if (!wordSpans.length) {
+            alert('Pehle dictation paragraph select karein!');
+            return;
+        }
+
+        const origWords = Array.from(wordSpans).map(span => span.innerText.trim());
+        const typedText = document.getElementById('p4ReTypeArea').value.trim();
+
+        if (!typedText) {
+            alert('Check karne ke liye pehle re-type box me text type karein!');
+            return;
+        }
+
+        const typedWords = typedText.split(/\s+/);
+        let correctCount = 0;
+
+        origWords.forEach((word, index) => {
+            if (typedWords[index] && typedWords[index] === word) {
+                correctCount++;
+            }
+        });
+
+        const totalOriginalWords = origWords.length;
+        const totalTypedWords = typedWords.length;
+        const accuracy = ((correctCount / totalOriginalWords) * 100).toFixed(2);
+        const errors = Math.abs(totalOriginalWords - correctCount);
+
+        const resultBox = document.getElementById('p4ResultBox');
+        const resultDetails = document.getElementById('p4ResultDetails');
+
+        resultDetails.innerHTML = `
+            <p><b>Total Dictation Words:</b> ${totalOriginalWords}</p>
+            <p><b>Total Typed Words:</b> ${totalTypedWords}</p>
+            <p><b>Correct Words:</b> ${correctCount}</p>
+            <p><b>Errors / Mistakes:</b> ${errors}</p>
+            <p style="font-size: 16px; color: ${accuracy > 80 ? 'green' : 'red'};"><b>Accuracy: ${accuracy}%</b></p>
+        `;
+
+        resultBox.classList.remove('hidden');
+    }
+</script>
+
+</body>
+</html>
