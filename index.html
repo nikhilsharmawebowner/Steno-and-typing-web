@@ -1,2 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Steno & Typing Practice Portal</title>
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
-bdhdbsj
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --border: #e2e8f0;
+      --highlight: #fef08a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+    .container { width: 100%; max-width: 900px; background: var(--card-bg); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid var(--border); overflow: hidden; }
+
+    /* Page Navigation Logic */
+    .page { display: none; padding: 30px; }
+    .page.active { display: block; }
+
+    /* UI Components */
+    h2 { margin-bottom: 20px; color: var(--primary-dark); font-size: 24px; text-align: center; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
+    input, select, textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; outline: none; }
+    input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+    
+    .btn { display: inline-block; width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; text-align: center; transition: background 0.2s; }
+    .btn:hover { background: var(--primary-dark); }
+    .btn-secondary { background: #64748b; margin-top: 10px; }
+    .btn-secondary:hover { background: #475569; }
+
+    /* Typing & Highlight Area */
+    .text-display { height: 180px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 15px; background: #fafafa; font-size: 18px; line-height: 1.8; margin-bottom: 15px; text-align: justify; }
+    .word { display: inline-block; margin-right: 5px; padding: 2px 4px; border-radius: 4px; }
+    .word.active { background-color: var(--highlight); font-weight: bold; }
+    .word.correct { color: #16a34a; }
+    .word.incorrect { color: #dc2626; text-decoration: line-through; }
+
+    /* Controls & Audio */
+    .audio-panel { margin-bottom: 15px; background: #eff6ff; padding: 15px; border-radius: 8px; border: 1px solid #bfdbfe; }
+    audio { width: 100%; margin-top: 10px; }
+    
+    /* Grid Layout for Dashboards */
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .card { background: #f1f5f9; padding: 20px; border-radius: 8px; text-align: center; }
+    .card h3 { font-size: 28px; color: var(--primary); margin-top: 10px; }
+    
+    .nav-link { text-align: center; margin-top: 15px; font-size: 14px; color: var(--primary); cursor: pointer; text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- PAGE 1: LOGIN -->
+  <div id="page-1" class="page active">
+    <h2>Student & Admin Login</h2>
+    <div class="form-group">
+      <label>Email Address</label>
+      <input type="email" id="login-email" placeholder="enter your email">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="login-pass" placeholder="enter password">
+    </div>
+    <button class="btn" onclick="handleLogin()">Login</button>
+    <div class="nav-link" onclick="showPage(2)">Don't have an account? Register here</div>
+  </div>
+
+  <!-- PAGE 2: SIGNUP -->
+  <div id="page-2" class="page">
+    <h2>Register New Account</h2>
+    <div class="form-group">
+      <label>Full Name</label>
+      <input type="text" id="reg-name" placeholder="Name">
+    </div>
+    <div class="form-group">
+      <label>Email Address</label>
+      <input type="email" id="reg-email" placeholder="Email">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="reg-pass" placeholder="Password">
+    </div>
+    <button class="btn" onclick="handleSignup()">Create Account</button>
+    <div class="nav-link" onclick="showPage(1)">Already registered? Login here</div>
+  </div>
+
+  <!-- PAGE 3: STUDENT DASHBOARD -->
+  <div id="page-3" class="page">
+    <h2>Student Dashboard</h2>
+    <div class="grid">
+      <div class="card">
+        <p>Total Tests Taken</p>
+        <h3 id="stat-tests">0</h3>
+      </div>
+      <div class="card">
+        <p>Avg Speed (WPM)</p>
+        <h3 id="stat-wpm">0</h3>
+      </div>
+      <div class="card">
+        <p>Avg Accuracy</p>
+        <h3 id="stat-acc">0%</h3>
+      </div>
+    </div>
+    <button class="btn" onclick="showPage(4)">Start New Dictation Practice</button>
+    <button class="btn btn-secondary" onclick="logout()">Logout</button>
+  </div>
+
+  <!-- PAGE 4: PRACTICE & DICTATION PAGE -->
+  <div id="page-4" class="page">
+    <h2>Steno Dictation & Typing Test</h2>
+    
+    <div class="audio-panel">
+      <label>Dictation Audio Control</label>
+      <audio id="dictation-audio" controls src=""></audio>
+    </div>
+
+    <div class="text-display" id="passage-box">
+      <!-- Words rendered via JS -->
+    </div>
+
+    <div class="form-group">
+      <textarea id="typing-input" rows="5" placeholder="Start typing here as the dictation plays..." oninput="checkTyping()"></textarea>
+    </div>
+
+    <button class="btn" onclick="submitTest()">Submit Test</button>
+    <button class="btn btn-secondary" onclick="showPage(3)">Back to Dashboard</button>
+  </div>
+
+  <!-- PAGE 5: RESULT ANALYSIS -->
+  <div id="page-5" class="page">
+    <h2>Test Results & Performance</h2>
+    <div class="grid">
+      <div class="card">
+        <p>Speed</p>
+        <h3 id="res-wpm">0 WPM</h3>
+      </div>
+      <div class="card">
+        <p>Accuracy</p>
+        <h3 id="res-acc">0%</h3>
+      </div>
+      <div class="card">
+        <p>Total Errors</p>
+        <h3 id="res-err">0</h3>
+      </div>
+    </div>
+    <button class="btn" onclick="showPage(3)">Go to Dashboard</button>
+  </div>
+
+  <!-- PAGE 6: ADMIN PANEL -->
+  <div id="page-6" class="page">
+    <h2>Admin Dashboard</h2>
+    <button class="btn" onclick="showPage(7)">Upload New Dictation Passage</button>
+    <button class="btn btn-secondary" onclick="showPage(3)">Switch to Student View</button>
+  </div>
+
+  <!-- PAGE 7: PASSAGE UPLOAD (ADMIN) -->
+  <div id="page-7" class="page">
+    <h2>Add New Dictation Test</h2>
+    <div class="form-group">
+      <label>Passage Title</label>
+      <input type="text" id="p-title" placeholder="e.g. Legal Dictation 80 WPM">
+    </div>
+    <div class="form-group">
+      <label>Audio URL (.mp3)</label>
+      <input type="url" id="p-audio" placeholder="Direct link to mp3 file">
+    </div>
+    <div class="form-group">
+      <label>Passage Text Content</label>
+      <textarea id="p-text" rows="6" placeholder="Paste full transcription text here..."></textarea>
+    </div>
+    <button class="btn" onclick="savePassage()">Publish Dictation</button>
+    <button class="btn btn-secondary" onclick="showPage(6)">Cancel</button>
+  </div>
+
+</div>
+
+<script>
+  // Firebase Configuration (Replace with your keys if needed)
+  const firebaseConfig = {
+    apiKey: "AIzaSyDummyKey-ForTemplateOnly",
+    authDomain: "steno-app.firebaseapp.com",
+    projectId: "steno-app",
+    storageBucket: "steno-app.appspot.com",
+    messagingSenderId: "1234567890",
+    appId: "1:1234567890:web:dummyid"
+  };
+  
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+
+  // Application State & Default Data
+  let sampleText = "Stenography is a valuable skill that requires regular practice and extreme accuracy. As you type through this paragraph, notice how the text smoothly scrolls line by line without stopping or hiding the remaining words. Full stops are carefully calculated into your score, while commas and dashes are ignored.";
+  let wordsArray = [];
+  let currentWordIndex = 0;
+
+  // Page Routing System
+  function showPage(pageNumber) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(`page-${pageNumber}`).classList.add('active');
+    
+    if(pageNumber === 4) {
+      initPracticePage();
+    }
+  }
+
+  // Initialize Practice Text and Highlighting
+  function initPracticePage() {
+    const box = document.getElementById('passage-box');
+    box.innerHTML = '';
+    wordsArray = sampleText.split(' ');
+    
+    wordsArray.forEach((word, index) => {
+      const span = document.createElement('span');
+      span.className = 'word';
+      span.id = `word-${index}`;
+      span.innerText = word;
+      box.appendChild(span);
+    });
+
+    highlightWord(0);
+  }
+
+  // Word-by-Word Highlighting & Auto-Scroll Logic
+  function highlightWord(index) {
+    document.querySelectorAll('.word').forEach(w => w.classList.remove('active'));
+    const target = document.getElementById(`word-${index}`);
+    if (target) {
+      target.classList.add('active');
+      target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+
+  // Real-time Typing & Word Tracker
+  function checkTyping() {
+    const inputVal = document.getElementById('typing-input').value;
+    const typedWords = inputVal.trim().split(/\s+/);
+    
+    if (typedWords.length > 0 && inputVal.length > 0) {
+      currentWordIndex = typedWords.length - 1;
+      highlightWord(currentWordIndex);
+    }
+  }
+
+  // Authentication Handlers
+  function handleLogin() {
+    showPage(3); // Navigate to Student Dashboard
+  }
+
+  function handleSignup() {
+    alert('Account created successfully!');
+    showPage(3);
+  }
+
+  function logout() {
+    showPage(1);
+  }
+
+  // Test Evaluation (Ignores Commas/Dashes, Counts Full Stops)
+  function submitTest() {
+    const typedText = document.getElementById('typing-input').value;
+    
+    // Clean strings according to rules
+    const cleanOriginal = sampleText.replace(/[,—\-]/g, '');
+    const cleanTyped = typedText.replace(/[,—\-]/g, '');
+
+    const origWords = cleanOriginal.split(/\s+/);
+    const typedWords = cleanTyped.split(/\s+/);
+
+    let correctCount = 0;
+    origWords.forEach((w, i) => {
+      if (typedWords[i] && typedWords[i] === w) {
+        correctCount++;
+      }
+    });
+
+    const accuracy = Math.round((correctCount / origWords.length) * 100) || 0;
+    const wpm = Math.round((typedWords.length / 5) * 60) || 0; // Standard calculation
+
+    document.getElementById('res-wpm').innerText = `${wpm} WPM`;
+    document.getElementById('res-acc').innerText = `${accuracy}%`;
+    document.getElementById('res-err').innerText = `${origWords.length - correctCount}`;
+
+    showPage(5);
+  }
+
+  function savePassage() {
+    const text = document.getElementById('p-text').value;
+    if(text) {
+      sampleText = text;
+      alert('New passage saved!');
+      showPage(6);
+    }
+  }
+</script>
+
+</body>
+</html>
