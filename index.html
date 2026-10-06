@@ -364,7 +364,13 @@
     function navigateFromOwner() {
         const pageNum = document.getElementById('ownerNavigationMode').value;
         hideAllPages();
-        document.getElementById(`page${pageNum}`).classList.remove('hidden');     }      function navigateFromStudent() {         const pageNum = document.getElementById('studentNavigationMode').value;         hideAllPages();         document.getElementById(`page${pageNum}`).classList.remove('hidden');
+        document.getElementById(`page${pageNum}`).classList.remove('hidden');
+    }
+
+    function navigateFromStudent() {
+        const pageNum = document.getElementById('studentNavigationMode').value;
+        hideAllPages();
+        document.getElementById(`page${pageNum}`).classList.remove('hidden');
     }
 
     function updateOwnerCredentials() {
@@ -415,4 +421,218 @@
                     <td><b>${s.studentId}</b><br><small>${s.password}</small></td>
                     <td>${s.name}</td>
                     <td>${s.course}</td>
-                    <td>${s.contact}
+                    <td>${s.contact}</td>
+                    <td>${s.qualification}</td>
+                    <td>Total: ₹${s.totalFee}<br><span class="fee-badge">Due: ₹${dueFee}</span></td>
+                    <td><button class="btn-success" onclick="addFeePrompt(${s.id})">+ Fee</button></td>
+                    <td><small>${s.feeHistory.map(f => `₹${f.amount} (${f.date})`).join('<br>')}</small></td>
+                    <td><button class="btn-danger" onclick="deleteStudent(${s.id})">Delete</button></td>
+                </tr>
+            `;
+        });
+    }
+
+    function deleteStudent(id) {
+        students = students.filter(s => s.id !== id);
+        localStorage.setItem('app_students', JSON.stringify(students));
+        renderStudents();
+    }
+
+    function deleteSelectedStudents() {
+        const selected = Array.from(document.querySelectorAll('.stCheck:checked')).map(c => parseInt(c.value));
+        students = students.filter(s => !selected.includes(s.id));
+        localStorage.setItem('app_students', JSON.stringify(students));
+        renderStudents();
+    }
+
+    function toggleSelectAll(master) {
+        document.querySelectorAll('.stCheck').forEach(c => c.checked = master.checked);
+    }
+
+    function addFeePrompt(id) {
+        const amt = parseFloat(prompt('Kitni fee jama karni hai?'));
+        if (amt && amt > 0) {
+            let st = students.find(s => s.id === id);
+            st.feeHistory.push({ amount: amt, date: new Date().toLocaleDateString() });
+            localStorage.setItem('app_students', JSON.stringify(students));
+            renderStudents();
+        }
+    }
+
+    function saveParagraph() {
+        const cat = document.getElementById('paraCategory').value;
+        const title = document.getElementById('paraTitle').value.trim();
+        const content = document.getElementById('paraContent').value.trim();
+
+        if (!title || !content) { alert('Title aur Content bharein!'); return; }
+
+        paragraphs.push({ id: Date.now(), category: cat, title, content });
+        localStorage.setItem('app_paragraphs', JSON.stringify(paragraphs));
+        renderParagraphs();
+        loadStenoParagraphs();
+        alert('Paragraph save ho gaya!');
+    }
+
+    function renderParagraphs() {
+        const tbody = document.getElementById('paragraphTableBody');
+        tbody.innerHTML = '';
+        paragraphs.forEach(p => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${p.category}</td>
+                    <td>${p.title}</td>
+                    <td>${p.content.substring(0, 40)}...</td>
+                    <td><button class="btn-danger" onclick="deleteParagraph(${p.id})">Remove</button></td>
+                </tr>
+            `;
+        });
+    }
+
+    function deleteParagraph(id) {
+        paragraphs = paragraphs.filter(p => p.id !== id);
+        localStorage.setItem('app_paragraphs', JSON.stringify(paragraphs));
+        renderParagraphs();
+        loadStenoParagraphs();
+    }
+
+    function populateSpeedDropdown() {
+        const select = document.getElementById('stenoSpeedSelect');
+        select.innerHTML = '';
+        for (let wpm = 30; wpm <= 180; wpm += 10) {
+            select.innerHTML += `<option value="${wpm}">${wpm} WPM</option>`;
+        }
+        select.value = "80";
+    }
+
+    function populateWordLimitDropdown() {
+        const select = document.getElementById('stenoWordLimitSelect');
+        select.innerHTML = '';
+        for (let w = 200; w <= 2000; w += 100) {
+            select.innerHTML += `<option value="${w}">${w} Words</option>`;
+        }
+    }
+
+    function loadStenoParagraphs() {
+        const select = document.getElementById('stenoParaSelect');
+        select.innerHTML = '<option value="">-- Choose Paragraph --</option>';
+        paragraphs.filter(p => p.category === 'Hindi Steno').forEach(p => {
+            select.innerHTML += `<option value="${p.id}">${p.title}</option>`;
+        });
+    }
+
+    // LOAD PARAGRAPH & SPLIT INTO HIGHLIGHTABLE SPANS
+    function loadSelectedStenoPara() {
+        const paraId = parseInt(document.getElementById('stenoParaSelect').value);
+        const p = paragraphs.find(item => item.id === paraId);
+        if (p) {
+            currentActiveText = p.content;
+            renderInteractiveWords(currentActiveText);
+        }
+    }
+
+    function applyWordLimitToPara() {
+        const limit = parseInt(document.getElementById('stenoWordLimitSelect').value);
+        if (currentActiveText) {
+            let words = currentActiveText.trim().split(/\s+/).slice(0, limit);
+            renderInteractiveWords(words.join(' '));
+        }
+    }
+
+    function renderInteractiveWords(text) {
+        const container = document.getElementById('p4DictationText');
+        container.innerHTML = '';
+        currentWordsList = text.trim().split(/\s+/);
+        
+        currentWordsList.forEach((word, idx) => {
+            const span = document.createElement('span');
+            span.className = 'steno-word';
+            span.id = `steno-word-${idx}`;
+            span.innerText = word;
+            container.appendChild(span);
+        });
+    }
+
+    function changeTypingFont() {
+        const selectedFont = document.getElementById('stenoFontSelect').value;
+        document.getElementById('p4ReTypeArea').className = selectedFont;
+    }
+
+    // SOUND HIGHLIGHTING & AUTO-SCROLL DICTATION ENGINE
+    function startDictationAudio() {
+        if (!currentWordsList || currentWordsList.length === 0) {
+            alert('Pehle Paragraph select karein!'); return;
+        }
+
+        window.speechSynthesis.cancel();
+        const fullText = currentWordsList.join(' ');
+        let speechUtterance = new SpeechSynthesisUtterance(fullText);
+        speechUtterance.lang = 'hi-IN';
+
+        const wpm = parseInt(document.getElementById('stenoSpeedSelect').value);
+        speechUtterance.rate = wpm / 100;
+
+        // HIGHLIGHT & SCROLL ON WORD SOUND
+        speechUtterance.onboundary = function(event) {
+            if (event.name === 'word') {
+                const charIndex = event.charIndex;
+                let accumulatedLength = 0;
+                
+                for (let i = 0; i < currentWordsList.length; i++) {
+                    accumulatedLength += currentWordsList[i].length + 1; // +1 for space
+                    if (charIndex < accumulatedLength) {
+                        highlightAndScrollWord(i);
+                        break;
+                    }
+                }
+            }
+        };
+
+        window.speechSynthesis.speak(speechUtterance);
+    }
+
+    function highlightAndScrollWord(index) {
+        document.querySelectorAll('.steno-word').forEach(w => w.classList.remove('highlight'));
+        const target = document.getElementById(`steno-word-${index}`);
+        if (target) {
+            target.classList.add('highlight');
+            target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    function stopDictationAudio() {
+        window.speechSynthesis.cancel();
+        document.querySelectorAll('.steno-word').forEach(w => w.classList.remove('highlight'));
+    }
+
+    function calculateStenoAccuracy() {
+        const originalText = currentWordsList.join(' ');
+        const typedText = document.getElementById('p4ReTypeArea').value.trim();
+
+        if (!typedText) { alert('Kripya Re-Type Box mein steno type karein!'); return; }
+
+        let origWords = originalText.replace(/[,—\-]/g, '').split(/\s+/);
+        let typedWords = typedText.replace(/[,—\-]/g, '').split(/\s+/);
+
+        let correctCount = 0;
+        origWords.forEach((word, idx) => {
+            if (typedWords[idx] && typedWords[idx] === word) { correctCount++; }
+        });
+
+        let accuracy = Math.round((correctCount / origWords.length) * 100) || 0;
+        let errors = origWords.length - correctCount;
+
+        const resBox = document.getElementById('p4ResultBox');
+        const resDetails = document.getElementById('p4ResultDetails');
+
+        resDetails.innerHTML = `
+            <p><b>Total Words:</b> ${origWords.length}</p>
+            <p><b>Correct Words:</b> ${correctCount}</p>
+            <p><b>Errors / Mistakes:</b> ${errors}</p>
+            <p><b>Accuracy:</b> <span style="color:${accuracy > 85 ? 'green' : 'red'}; font-weight:bold;">${accuracy}%</span></p>
+        `;
+        resBox.classList.remove('hidden');
+    }
+</script>
+
+</body>
+</html>
