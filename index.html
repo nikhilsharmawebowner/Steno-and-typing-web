@@ -73,19 +73,19 @@
 </head>
 <body>
 
-<!-- PAGE 1: LOGIN -->
+<!-- PAGE 1: LOGIN (CLEAN PLACEHOLDERS) -->
 <div id="loginPage" class="login-card">
     <h2>Portal Login</h2>
     <div class="input-group">
         <label>User / Student ID</label>
         <div class="input-wrapper">
-            <input type="text" id="userId" placeholder="Enter ID (Owner: new owner)">
+            <input type="text" id="userId" placeholder="Enter User or Student ID">
         </div>
     </div>
     <div class="input-group">
         <label>Password</label>
         <div class="input-wrapper">
-            <input type="password" id="userPass" placeholder="Enter Password (Owner: new1234)">
+            <input type="password" id="userPass" placeholder="Enter Password">
             <span class="toggle-icon" id="icon1" onclick="toggleVisibility('userPass', 'icon1')">👁️</span>
         </div>
     </div>
@@ -252,13 +252,12 @@
         <h3>Paragraph Dictation Player Box</h3>
         <p><b>Original Dictation Text Preview (Word Highlight & Auto-Scroll Enabled):</b></p>
         
-        <!-- AUTO-SCROLLING & HIGHLIGHTING CONTAINER -->
         <div id="p4DictationText" class="dictation-display-box">
             <em>Kripya Column 1 se paragraph select karein...</em>
         </div>
 
         <div style="margin-top: 15px; display: flex; gap: 10px; align-items: center;">
-            <button class="btn-success" style="width: auto; padding: 8px 16px;" onclick="startDictationAudio()">▶️️ Play Dictation Audio</button>
+            <button class="btn-success" style="width: auto; padding: 8px 16px;" onclick="startDictationAudio()">▶ Play Dictation Audio</button>
             <button class="btn-danger" style="width: auto; padding: 8px 16px;" onclick="stopDictationAudio()">⏹️ Stop Audio</button>
         </div>
 
@@ -520,7 +519,6 @@
         });
     }
 
-    // LOAD PARAGRAPH & SPLIT INTO HIGHLIGHTABLE SPANS
     function loadSelectedStenoPara() {
         const paraId = parseInt(document.getElementById('stenoParaSelect').value);
         const p = paragraphs.find(item => item.id === paraId);
@@ -557,7 +555,6 @@
         document.getElementById('p4ReTypeArea').className = selectedFont;
     }
 
-    // SOUND HIGHLIGHTING & AUTO-SCROLL DICTATION ENGINE
     function startDictationAudio() {
         if (!currentWordsList || currentWordsList.length === 0) {
             alert('Pehle Paragraph select karein!'); return;
@@ -571,14 +568,13 @@
         const wpm = parseInt(document.getElementById('stenoSpeedSelect').value);
         speechUtterance.rate = wpm / 100;
 
-        // HIGHLIGHT & SCROLL ON WORD SOUND
         speechUtterance.onboundary = function(event) {
             if (event.name === 'word') {
                 const charIndex = event.charIndex;
                 let accumulatedLength = 0;
                 
                 for (let i = 0; i < currentWordsList.length; i++) {
-                    accumulatedLength += currentWordsList[i].length + 1; // +1 for space
+                    accumulatedLength += currentWordsList[i].length + 1;
                     if (charIndex < accumulatedLength) {
                         highlightAndScrollWord(i);
                         break;
