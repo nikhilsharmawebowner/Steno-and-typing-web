@@ -140,7 +140,7 @@
     </div>
 
     <div class="task-bar-card">
-        <h3>Task Bar: Add & Remove Paragraph (Auto Native Font Switcher Supported)</h3>
+        <h3>Task Bar: Add & Remove Paragraph (Direct KrutiDev 010/011 Typing Supported)</h3>
         <div class="form-grid" style="background: transparent; padding: 0;">
             <div>
                 <label>Category</label>
@@ -162,7 +162,7 @@
             <div><label>Title</label><input type="text" id="paraTitle" placeholder="Paragraph Title"></div>
             <div style="grid-column: span 2;">
                 <label>Content (Type directly)</label>
-                <textarea id="paraContent" class="font-mangal" rows="3" placeholder="Type paragraph text here..." oninput="handleAutoFontEngine(this)"></textarea>
+                <textarea id="paraContent" class="font-mangal" rows="3" placeholder="Type paragraph text here..." onkeypress="handleKrutiDevTyping(event, this)"></textarea>
             </div>
         </div>
         <button class="btn-success" onclick="saveParagraph()">Save Paragraph</button>
@@ -272,8 +272,8 @@
         <hr style="margin: 20px 0;">
 
         <h3>Re-Type Box (Type Steno Notes Here in Hindi)</h3>
-        <p><small>Audio dictation sunkar banayi gayi steno ko yahan re-type karein (KrutiDev 010/011 Typing Supported):</small></p>
-        <textarea id="p4ReTypeArea" class="font-mangal" rows="6" placeholder="Yahan re-typing start karein..." style="width: 100%; border: 1px solid #999; padding: 10px; border-radius: 5px; font-size: 16px;" oninput="handleAutoFontEngine(this)"></textarea>
+        <p><small>Audio dictation sunkar banayi gayi steno ko yahan re-type karein (KrutiDev 010/011 typing supported):</small></p>
+        <textarea id="p4ReTypeArea" class="font-mangal" rows="6" placeholder="Yahan re-typing start karein..." style="width: 100%; border: 1px solid #999; padding: 10px; border-radius: 5px; font-size: 16px;" onkeypress="handleKrutiDevTyping(event, this)"></textarea>
 
         <button class="btn-warning" style="margin-top: 10px; font-weight: bold;" onclick="calculateStenoAccuracy()">Check Accuracy & Mistakes</button>
 
@@ -302,7 +302,7 @@
     </div>
     <div class="page-box">
         <h3>Hindi Typing Area</h3>
-        <textarea id="p5TypingArea" class="font-mangal" rows="6" placeholder="Type here in Hindi..." style="width:100%; padding:10px;" oninput="handleAutoFontEngine(this)"></textarea>
+        <textarea id="p5TypingArea" class="font-mangal" rows="6" placeholder="Type here in Hindi..." style="width:100%; padding:10px;" onkeypress="handleKrutiDevTyping(event, this)"></textarea>
     </div>
 </div>
 
@@ -364,23 +364,28 @@
     let currentActiveText = '';
     let currentWordsList = [];
 
-    // REMINGTON LAYOUT MAP FOR KRUTI DEV 010/011
-    const remingtonFontMap = {
-        'a': 'ो', 'A': 'ो', 's': 'े', 'S': ' ै', 'd': '्', 'D': '्', 'f': 'ि', 'F': 'ी', 'g': 'ु', 'G': 'ू',
-        'h': 'प', 'H': 'फ', 'j': 'र', 'J': 'ऱ', 'k': 'क', 'K': 'ख', 'l': 'ต', 'L': 'ङ',
-        'q': 'ू', 'Q': '崋', 'w': 'ू', 'W': 'ः', 'e': 'म', 'E': 'म्', 'r': 'त', 'R': 'त्र',
-        't': 'ज', 'T': 'ज्ञ', 'y': 'ल', 'Y': 'ळ', 'u': 'न', 'U': 'न्', 'i': 'ब', 'I': 'भ',
-        'o': 'द', 'O': 'ध', 'p': 'ग', 'P': 'घ', 'z': 'ू', 'Z': 'ऑ', 'x': 'ं', 'X': 'ँ',
-        'c': 'ब', 'C': 'भ', 'v': 'अ', 'V': 'आ', 'b': 'इ', 'B': 'ई', 'n': 'उ', 'N': 'ऊ', 'm': 'ए'
+    // COMPREHENSIVE KRUTIDEV 010/011 (REMINGTON LAYOUT) KEY MAPPING ENGINE
+    const krutiDevRemingtonMap = {
+        '~': '़', '`': 'ॐ', '!': 'қ', '@': 'ऍ', '#': 'ॅ', '$': '्र', '%': '卐', '^': '्र', '&': '‘', '*': '’', '(': '(', ')': ')', '_': '—', '+': '+',
+        'q': 'ू', 'Q': '崋', 'w': 'ू', 'W': 'ः', 'e': 'म', 'E': 'म्', 'r': 'त', 'R': 'त्र', 't': 'ज', 'T': 'ज्ञ', 'y': 'ल', 'Y': 'ळ', 'u': 'न', 'U': 'न्', 'i': 'ब', 'I': 'भ', 'o': 'द', 'O': 'ध', 'p': 'ग', 'P': 'घ', '{': 'ध', '}': 'घ', '|': '|',
+        'a': 'ो', 'A': 'ो', 's': 'े', 'S': ' ै', 'd': '्', 'D': '्', 'f': 'ि', 'F': 'ी', 'g': 'ु', 'G': 'ू', 'h': 'प', 'H': 'फ', 'j': 'र', 'J': 'ऱ', 'k': 'क', 'K': 'ख', 'l': 'ต', 'L': 'ङ', ':': ':', '"': '"',
+        'z': 'ू', 'Z': 'ऑ', 'x': 'ं', 'X': 'ँ', 'c': 'ब', 'C': 'भ', 'v': 'अ', 'V': 'आ', 'b': 'इ', 'B': 'ई', 'n': 'उ', 'N': 'ऊ', 'm': 'ए', '<': '<', '>': '>', '?': '?',
+        '1': '1', '2': '2', '3': '3', '4': '4', '5': '5', '6': '6', '7': '7', '8': '8', '9': '9', '0': '0', '-': '-'
     };
 
-    function handleAutoFontEngine(textarea) {
-        const fontClass = textarea.className;
-        if (fontClass.includes('font-krutidev') || fontClass.includes('font-devlys')) {
-            let val = textarea.value;
-            let lastChar = val.slice(-1);
-            if (remingtonFontMap[lastChar]) {
-                textarea.value = val.slice(0, -1) + remingtonFontMap[lastChar];
+    function handleKrutiDevTyping(event, textarea) {
+        const activeFont = textarea.className;
+        if (activeFont.includes('font-krutidev') || activeFont.includes('font-devlys')) {
+            const char = event.key;
+            if (krutiDevRemingtonMap[char]) {
+                event.preventDefault();
+                const start = textarea.selectionStart;
+                const end = textarea.selectionEnd;
+                const val = textarea.value;
+                const mappedChar = krutiDevRemingtonMap[char];
+                
+                textarea.value = val.substring(0, start) + mappedChar + val.substring(end);
+                textarea.selectionStart = textarea.selectionEnd = start + mappedChar.length;
             }
         }
     }
