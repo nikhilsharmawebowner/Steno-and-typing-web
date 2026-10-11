@@ -140,7 +140,7 @@
     </div>
 
     <div class="task-bar-card">
-        <h3>Task Bar: Add & Remove Paragraph (Multi-Language Typing Supported)</h3>
+        <h3>Task Bar: Add & Remove Paragraph (Direct KrutiDev 010/011 Typing Supported)</h3>
         <div class="form-grid" style="background: transparent; padding: 0;">
             <div>
                 <label>Category</label>
@@ -155,14 +155,14 @@
                 <label>Select Font Mode for Typing</label>
                 <select id="ownerParaFontSelect" onchange="updateOwnerTypingFont()">
                     <option value="font-mangal">Mangal (Unicode / Normal)</option>
-                    <option value="font-krutidev">Kruti Dev 010 (Remington)</option>
+                    <option value="font-krutidev">Kruti Dev 010 / 011 (Remington)</option>
                     <option value="font-devlys">Devlys 010</option>
                 </select>
             </div>
             <div><label>Title</label><input type="text" id="paraTitle" placeholder="Paragraph Title"></div>
             <div style="grid-column: span 2;">
-                <label>Content (Type directly or use font mapping)</label>
-                <textarea id="paraContent" class="font-mangal" rows="3" placeholder="Type paragraph text here..." onkeypress="handleMultiLangTyping(event, this)"></textarea>
+                <label>Content (Type directly)</label>
+                <textarea id="paraContent" class="font-mangal" rows="3" placeholder="Type paragraph text here..." onkeypress="handleKrutiDevTyping(event, this)"></textarea>
             </div>
         </div>
         <button class="btn-success" onclick="saveParagraph()">Save Paragraph</button>
@@ -250,7 +250,7 @@
             <label style="color:#0056b3;"><b>Column 4: Select Hindi Font</b></label>
             <select id="stenoFontSelect" onchange="changeTypingFont('p4ReTypeArea', this.value)">
                 <option value="font-mangal">Mangal (Unicode / Inscript)</option>
-                <option value="font-krutidev">Kruti Dev 010 (Remington)</option>
+                <option value="font-krutidev">Kruti Dev 010 / 011 (Remington)</option>
                 <option value="font-devlys">Devlys 010</option>
             </select>
         </div>
@@ -272,8 +272,8 @@
         <hr style="margin: 20px 0;">
 
         <h3>Re-Type Box (Type Steno Notes Here in Hindi)</h3>
-        <p><small>Audio dictation sunkar banayi gayi steno ko yahan re-type karein (KrutiDev/Mangal typing supported) aur apni accuracy check karein:</small></p>
-        <textarea id="p4ReTypeArea" class="font-mangal" rows="6" placeholder="Yahan re-typing start karein..." style="width: 100%; border: 1px solid #999; padding: 10px; border-radius: 5px; font-size: 16px;" onkeypress="handleMultiLangTyping(event, this)"></textarea>
+        <p><small>Audio dictation sunkar banayi gayi steno ko yahan re-type karein (KrutiDev 010/011 typing supported):</small></p>
+        <textarea id="p4ReTypeArea" class="font-mangal" rows="6" placeholder="Yahan re-typing start karein..." style="width: 100%; border: 1px solid #999; padding: 10px; border-radius: 5px; font-size: 16px;" onkeypress="handleKrutiDevTyping(event, this)"></textarea>
 
         <button class="btn-warning" style="margin-top: 10px; font-weight: bold;" onclick="calculateStenoAccuracy()">Check Accuracy & Mistakes</button>
 
@@ -295,14 +295,14 @@
             <label>Select Font</label>
             <select id="p5FontSelect" onchange="changeTypingFont('p5TypingArea', this.value)">
                 <option value="font-mangal">Mangal</option>
-                <option value="font-krutidev">Kruti Dev 010</option>
+                <option value="font-krutidev">Kruti Dev 010 / 011</option>
                 <option value="font-devlys">Devlys 010</option>
             </select>
         </div>
     </div>
     <div class="page-box">
         <h3>Hindi Typing Area</h3>
-        <textarea id="p5TypingArea" class="font-mangal" rows="6" placeholder="Type here in Hindi..." style="width:100%; padding:10px;" onkeypress="handleMultiLangTyping(event, this)"></textarea>
+        <textarea id="p5TypingArea" class="font-mangal" rows="6" placeholder="Type here in Hindi..." style="width:100%; padding:10px;" onkeypress="handleKrutiDevTyping(event, this)"></textarea>
     </div>
 </div>
 
@@ -364,27 +364,28 @@
     let currentActiveText = '';
     let currentWordsList = [];
 
-    // KRUTIDEV 010 KEY MAPPING MAP
-    const krutiDevMap = {
-        'a': 'ो', 'A': 'ो', 's': 'े', 'S': ' ै', 'd': '्', 'D': '्', 'f': 'ि', 'F': 'ी', 'g': 'ु', 'G': 'ू',
-        'h': 'प', 'H': 'फ', 'j': 'र', 'J': 'ऱ', 'k': 'क', 'K': 'ख', 'l': 'ต', 'L': 'ङ',
-        'q': 'ू', 'Q': '्र', 'w': 'ू', 'W': 'ः', 'e': 'म', 'E': 'म्', 'r': 'त', 'R': 'त्र',
-        't': 'ज', 'T': 'ज्ञ', 'y': 'ल', 'Y': 'ळ', 'u': 'न', 'U': 'न्', 'i': 'ब', 'I': 'भ',
-        'o': 'द', 'O': 'ध', 'p': 'ग', 'P': 'घ', 'z': 'ू', 'Z': 'ऑ', 'x': 'ं', 'X': 'ँ',
-        'c': 'ब', 'C': 'भ', 'v': 'अ', 'V': 'आ', 'b': 'इ', 'B': 'ई', 'n': 'उ', 'N': 'ऊ', 'm': 'ए'
+    // COMPREHENSIVE KRUTIDEV 010/011 (REMINGTON LAYOUT) KEY MAPPING ENGINE
+    const krutiDevRemingtonMap = {
+        '~': '़', '`': 'ॐ', '!': 'қ', '@': 'ऍ', '#': 'ॅ', '$': '्र', '%': '卐', '^': '्र', '&': '‘', '*': '’', '(': '(', ')': ')', '_': '—', '+': '+',
+        'q': 'ू', 'Q': '崋', 'w': 'ू', 'W': 'ः', 'e': 'म', 'E': 'म्', 'r': 'त', 'R': 'त्र', 't': 'ज', 'T': 'ज्ञ', 'y': 'ल', 'Y': 'ळ', 'u': 'न', 'U': 'न्', 'i': 'ब', 'I': 'भ', 'o': 'द', 'O': 'ध', 'p': 'ग', 'P': 'घ', '{': 'ध', '}': 'घ', '|': '|',
+        'a': 'ो', 'A': 'ो', 's': 'े', 'S': ' ै', 'd': '्', 'D': '्', 'f': 'ि', 'F': 'ी', 'g': 'ु', 'G': 'ू', 'h': 'प', 'H': 'फ', 'j': 'र', 'J': 'ऱ', 'k': 'क', 'K': 'ख', 'l': 'ต', 'L': 'ङ', ':': ':', '"': '"',
+        'z': 'ू', 'Z': 'ऑ', 'x': 'ं', 'X': 'ँ', 'c': 'ब', 'C': 'भ', 'v': 'अ', 'V': 'आ', 'b': 'इ', 'B': 'ई', 'n': 'उ', 'N': 'ऊ', 'm': 'ए', '<': '<', '>': '>', '?': '?',
+        '1': '1', '2': '2', '3': '3', '4': '4', '5': '5', '6': '6', '7': '7', '8': '8', '9': '9', '0': '0', '-': '-'
     };
 
-    function handleMultiLangTyping(event, textarea) {
+    function handleKrutiDevTyping(event, textarea) {
         const activeFont = textarea.className;
         if (activeFont.includes('font-krutidev') || activeFont.includes('font-devlys')) {
             const char = event.key;
-            if (krutiDevMap[char]) {
+            if (krutiDevRemingtonMap[char]) {
                 event.preventDefault();
                 const start = textarea.selectionStart;
                 const end = textarea.selectionEnd;
                 const val = textarea.value;
-                textarea.value = val.substring(0, start) + krutiDevMap[char] + val.substring(end);
-                textarea.selectionStart = textarea.selectionEnd = start + 1;
+                const mappedChar = krutiDevRemingtonMap[char];
+                
+                textarea.value = val.substring(0, start) + mappedChar + val.substring(end);
+                textarea.selectionStart = textarea.selectionEnd = start + mappedChar.length;
             }
         }
     }
