@@ -140,7 +140,7 @@
     </div>
 
     <div class="task-bar-card">
-        <h3>Task Bar: Add & Remove Paragraph</h3>
+        <h3>Task Bar: Add & Remove Paragraph (Multi-Language Typing Supported)</h3>
         <div class="form-grid" style="background: transparent; padding: 0;">
             <div>
                 <label>Category</label>
@@ -151,10 +151,18 @@
                     <option value="English Typing">Column 4: English Typing</option>
                 </select>
             </div>
+            <div>
+                <label>Select Font Mode for Typing</label>
+                <select id="ownerParaFontSelect" onchange="updateOwnerTypingFont()">
+                    <option value="font-mangal">Mangal (Unicode / Normal)</option>
+                    <option value="font-krutidev">Kruti Dev 010 (Remington)</option>
+                    <option value="font-devlys">Devlys 010</option>
+                </select>
+            </div>
             <div><label>Title</label><input type="text" id="paraTitle" placeholder="Paragraph Title"></div>
             <div style="grid-column: span 2;">
-                <label>Content</label>
-                <textarea id="paraContent" rows="3" placeholder="Paste paragraph text..."></textarea>
+                <label>Content (Type directly or use font mapping)</label>
+                <textarea id="paraContent" class="font-mangal" rows="3" placeholder="Type paragraph text here..." onkeypress="handleMultiLangTyping(event, this)"></textarea>
             </div>
         </div>
         <button class="btn-success" onclick="saveParagraph()">Save Paragraph</button>
@@ -240,7 +248,7 @@
         </div>
         <div>
             <label style="color:#0056b3;"><b>Column 4: Select Hindi Font</b></label>
-            <select id="stenoFontSelect" onchange="changeTypingFont()">
+            <select id="stenoFontSelect" onchange="changeTypingFont('p4ReTypeArea', this.value)">
                 <option value="font-mangal">Mangal (Unicode / Inscript)</option>
                 <option value="font-krutidev">Kruti Dev 010 (Remington)</option>
                 <option value="font-devlys">Devlys 010</option>
@@ -264,8 +272,8 @@
         <hr style="margin: 20px 0;">
 
         <h3>Re-Type Box (Type Steno Notes Here in Hindi)</h3>
-        <p><small>Audio dictation sunkar banayi gayi steno ko yahan re-type karein aur apni accuracy check karein:</small></p>
-        <textarea id="p4ReTypeArea" class="font-mangal" rows="6" placeholder="Yahan re-typing start karein..." style="width: 100%; border: 1px solid #999; padding: 10px; border-radius: 5px; font-size: 16px;"></textarea>
+        <p><small>Audio dictation sunkar banayi gayi steno ko yahan re-type karein (KrutiDev/Mangal typing supported) aur apni accuracy check karein:</small></p>
+        <textarea id="p4ReTypeArea" class="font-mangal" rows="6" placeholder="Yahan re-typing start karein..." style="width: 100%; border: 1px solid #999; padding: 10px; border-radius: 5px; font-size: 16px;" onkeypress="handleMultiLangTyping(event, this)"></textarea>
 
         <button class="btn-warning" style="margin-top: 10px; font-weight: bold;" onclick="calculateStenoAccuracy()">Check Accuracy & Mistakes</button>
 
@@ -276,13 +284,54 @@
     </div>
 </div>
 
-<!-- PAGES 5, 6, 7 -->
-<div id="page5" class="container hidden"><div class="header"><h2>Page 5: Hindi Typing</h2><button style="width:auto;" onclick="backToDashboard()">Back</button></div><div class="page-box"><h3>Hindi Typing Practice Mode</h3></div></div>
-<div id="page6" class="container hidden"><div class="header"><h2>Page 6: English Steno</h2><button style="width:auto;" onclick="backToDashboard()">Back</button></div><div class="page-box"><h3>English Steno Dictation Mode</h3></div></div>
-<div id="page7" class="container hidden"><div class="header"><h2>Page 7: English Typing</h2><button style="width:auto;" onclick="backToDashboard()">Back</button></div><div class="page-box"><h3>English Typing Practice Mode</h3></div></div>
+<!-- PAGE 5: HINDI TYPING -->
+<div id="page5" class="container hidden">
+    <div class="header">
+        <h2>Page 5: Hindi Typing Practice</h2>
+        <button style="width:auto;" onclick="backToDashboard()">Back</button>
+    </div>
+    <div class="form-grid" style="background: #f0f7ff;">
+        <div>
+            <label>Select Font</label>
+            <select id="p5FontSelect" onchange="changeTypingFont('p5TypingArea', this.value)">
+                <option value="font-mangal">Mangal</option>
+                <option value="font-krutidev">Kruti Dev 010</option>
+                <option value="font-devlys">Devlys 010</option>
+            </select>
+        </div>
+    </div>
+    <div class="page-box">
+        <h3>Hindi Typing Area</h3>
+        <textarea id="p5TypingArea" class="font-mangal" rows="6" placeholder="Type here in Hindi..." style="width:100%; padding:10px;" onkeypress="handleMultiLangTyping(event, this)"></textarea>
+    </div>
+</div>
+
+<!-- PAGE 6: ENGLISH STENO -->
+<div id="page6" class="container hidden">
+    <div class="header">
+        <h2>Page 6: English Steno</h2>
+        <button style="width:auto;" onclick="backToDashboard()">Back</button>
+    </div>
+    <div class="page-box">
+        <h3>English Steno Dictation Mode</h3>
+        <textarea id="p6TypingArea" rows="6" placeholder="Type English Steno here..." style="width:100%; padding:10px;"></textarea>
+    </div>
+</div>
+
+<!-- PAGE 7: ENGLISH TYPING -->
+<div id="page7" class="container hidden">
+    <div class="header">
+        <h2>Page 7: English Typing</h2>
+        <button style="width:auto;" onclick="backToDashboard()">Back</button>
+    </div>
+    <div class="page-box">
+        <h3>English Typing Practice Mode</h3>
+        <textarea id="p7TypingArea" rows="6" placeholder="Type English here..." style="width:100%; padding:10px;"></textarea>
+    </div>
+</div>
 
 <script>
-    // EXACT FIREBASE CONFIGURATION SUBMITTED BY YOU
+    // EXACT FIREBASE CONFIGURATION
     const firebaseConfig = {
         apiKey: "AIzaSyB1vFIVBkJSZfTeYGczoIoW54HlXWSZHnc",
         authDomain: "stenotypingweb.firebaseapp.com",
@@ -314,6 +363,31 @@
     let currentUserRole = '';
     let currentActiveText = '';
     let currentWordsList = [];
+
+    // KRUTIDEV 010 KEY MAPPING MAP
+    const krutiDevMap = {
+        'a': 'ो', 'A': 'ो', 's': 'े', 'S': ' ै', 'd': '्', 'D': '्', 'f': 'ि', 'F': 'ी', 'g': 'ु', 'G': 'ू',
+        'h': 'प', 'H': 'फ', 'j': 'र', 'J': 'ऱ', 'k': 'क', 'K': 'ख', 'l': 'ต', 'L': 'ङ',
+        'q': 'ू', 'Q': '्र', 'w': 'ू', 'W': 'ः', 'e': 'म', 'E': 'म्', 'r': 'त', 'R': 'त्र',
+        't': 'ज', 'T': 'ज्ञ', 'y': 'ल', 'Y': 'ळ', 'u': 'न', 'U': 'न्', 'i': 'ब', 'I': 'भ',
+        'o': 'द', 'O': 'ध', 'p': 'ग', 'P': 'घ', 'z': 'ू', 'Z': 'ऑ', 'x': 'ं', 'X': 'ँ',
+        'c': 'ब', 'C': 'भ', 'v': 'अ', 'V': 'आ', 'b': 'इ', 'B': 'ई', 'n': 'उ', 'N': 'ऊ', 'm': 'ए'
+    };
+
+    function handleMultiLangTyping(event, textarea) {
+        const activeFont = textarea.className;
+        if (activeFont.includes('font-krutidev') || activeFont.includes('font-devlys')) {
+            const char = event.key;
+            if (krutiDevMap[char]) {
+                event.preventDefault();
+                const start = textarea.selectionStart;
+                const end = textarea.selectionEnd;
+                const val = textarea.value;
+                textarea.value = val.substring(0, start) + krutiDevMap[char] + val.substring(end);
+                textarea.selectionStart = textarea.selectionEnd = start + 1;
+            }
+        }
+    }
 
     window.onload = function() {
         if (isFirebaseActive) {
@@ -415,6 +489,15 @@
             localStorage.setItem('app_owner_creds', JSON.stringify(ownerCreds));
             alert('Owner ID & Password safaltapoorvak badal gaye hain!');
         } else { alert('Kripya dono fields fill karein!'); }
+    }
+
+    function updateOwnerTypingFont() {
+        const selectedFont = document.getElementById('ownerParaFontSelect').value;
+        document.getElementById('paraContent').className = selectedFont;
+    }
+
+    function changeTypingFont(textareaId, fontClass) {
+        document.getElementById(textareaId).className = fontClass;
     }
 
     function addStudent() {
@@ -617,11 +700,6 @@
             span.innerText = word;
             container.appendChild(span);
         });
-    }
-
-    function changeTypingFont() {
-        const selectedFont = document.getElementById('stenoFontSelect').value;
-        document.getElementById('p4ReTypeArea').className = selectedFont;
     }
 
     function startDictationAudio() {
