@@ -67,10 +67,17 @@
 
         /* Fonts for Typing Area */
         .font-mangal { font-family: 'Tiro Devanagari Hindi', 'Arial', sans-serif !important; }
-        .font-krutidev { font-family: 'KrutiDev', 'Kruti Dev 010', sans-serif !important; }
+        .font-krutidev010 { font-family: 'KrutiDev', 'Kruti Dev 010', sans-serif !important; }
+        .font-krutidev011 { font-family: 'KrutiDev', 'Kruti Dev 010', sans-serif !important; }
         .font-devlys { font-family: 'Devlys', 'Devlys 010', sans-serif !important; }
 
         .custom-editor { min-height: 120px; background: white; outline: none; white-space: pre-wrap; word-wrap: break-word; overflow-y: auto; }
+
+        /* Modal Overlay for Editing Student Data */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 2000; }
+        .modal-card { background: white; width: 400px; border-radius: 8px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .modal-card h3 { margin-top: 0; color: #333; }
+        .modal-buttons { display: flex; gap: 10px; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -157,7 +164,8 @@
                 <label>Select Font Mode for Typing</label>
                 <select id="ownerParaFontSelect" onchange="updateOwnerTypingFont()">
                     <option value="font-mangal">Mangal (Unicode / Normal)</option>
-                    <option value="font-krutidev">Kruti Dev 010 / 011 (Remington)</option>
+                    <option value="font-krutidev011">Kruti Dev 011 (Remington)</option>
+                    <option value="font-krutidev010">Kruti Dev 010 (Remington)</option>
                     <option value="font-devlys">Devlys 010</option>
                 </select>
             </div>
@@ -252,7 +260,8 @@
             <label style="color:#0056b3;"><b>Column 4: Select Hindi Font</b></label>
             <select id="stenoFontSelect" onchange="changeTypingFont('p4ReTypeArea', this.value)">
                 <option value="font-mangal">Mangal (Unicode / Inscript)</option>
-                <option value="font-krutidev">Kruti Dev 010 / 011 (Remington)</option>
+                <option value="font-krutidev011">Kruti Dev 011 (Remington)</option>
+                <option value="font-krutidev010">Kruti Dev 010 (Remington)</option>
                 <option value="font-devlys">Devlys 010</option>
             </select>
         </div>
@@ -297,7 +306,8 @@
             <label>Select Font</label>
             <select id="p5FontSelect" onchange="changeTypingFont('p5TypingArea', this.value)">
                 <option value="font-mangal">Mangal</option>
-                <option value="font-krutidev">Kruti Dev 010 / 011</option>
+                <option value="font-krutidev011">Kruti Dev 011</option>
+                <option value="font-krutidev010">Kruti Dev 010</option>
                 <option value="font-devlys">Devlys 010</option>
             </select>
         </div>
@@ -329,6 +339,25 @@
     <div class="page-box">
         <h3>English Typing Practice Mode</h3>
         <textarea id="p7TypingArea" rows="6" placeholder="Type English here..." style="width:100%; padding:10px;"></textarea>
+    </div>
+</div>
+
+<!-- EDIT STUDENT DATA MODAL -->
+<div id="editStudentModal" class="modal-overlay">
+    <div class="modal-card">
+        <h3>Edit Student Data</h3>
+        <input type="hidden" id="editDocId">
+        <div class="input-group"><label>Student ID</label><input type="text" id="editStId"></div>
+        <div class="input-group"><label>Password</label><input type="text" id="editStPass"></div>
+        <div class="input-group"><label>Name</label><input type="text" id="editStName"></div>
+        <div class="input-group"><label>Course</label><input type="text" id="editStCourse"></div>
+        <div class="input-group"><label>Contact</label><input type="text" id="editStContact"></div>
+        <div class="input-group"><label>Qualification</label><input type="text" id="editStQual"></div>
+        <div class="input-group"><label>Total Fee (₹)</label><input type="number" id="editStTotalFee"></div>
+        <div class="modal-buttons">
+            <button class="btn-danger" style="margin-top:0;" onclick="closeEditModal()">Cancel</button>
+            <button class="btn-success" style="margin-top:0;" onclick="saveEditedStudent()">Save Changes</button>
+        </div>
     </div>
 </div>
 
@@ -365,24 +394,52 @@
     let currentUserRole = '';
     let currentActiveText = '';
     let currentWordsList = [];
+    let synth = window.speechSynthesis;
+    let speechUtterance = null;
+    let highlightInterval = null;
 
-    // DIRECT ASCII KRUTI DEV REMINGTON ENGINE MAP
-    const krutiMapEngine = {
-        'a': 'ks', 'A': 'ks', 's': 's', 'S': 'S', 'd': 'd', 'D': 'D', 'f': 'f', 'F': 'F', 'g': 'g', 'G': 'G',
-        'h': 'h', 'H': 'H', 'j': 'j', 'J': 'J', 'k': 'k', 'K': 'K', 'l': 'l', 'L': 'L',
-        'q': 'q', 'Q': 'Q', 'w': 'w', 'W': 'W', 'e': 'e', 'E': 'E', 'r': 'r', 'R': 'R',
-        't': 't', 'T': 'T', 'y': 'y', 'Y': 'Y', 'u': 'u', 'U': 'U', 'i': 'i', 'I': 'I',
-        'o': 'o', 'O': 'O', 'p': 'p', 'P': 'P', 'z': 'z', 'Z': 'Z', 'x': 'x', 'X': 'X',
-        'c': 'c', 'C': 'C', 'v': 'v', 'V': 'V', 'b': 'b', 'B': 'B', 'n': 'n', 'N': 'N', 'm': 'm'
-    };
-
+    // DIRECT ASCII KRUTI DEV REMINGTON ENGINE MAP (WITH DECOUPLED 010 & 011 MAPPING)
     function handleRemingtonEngine(e, selectId, element) {
         const fontVal = document.getElementById(selectId).value;
-        if (fontVal === 'font-krutidev' || fontVal === 'font-devlys') {
-            if (e.key.length === 1 && !e.ctrlKey && !e.altKey) {
+        if (fontVal === 'font-krutidev010' || fontVal === 'font-krutidev011' || fontVal === 'font-devlys') {
+            let key = e.key;
+            let shift = e.shiftKey;
+            let charToInsert = null;
+
+            // Decoupling quote (') key mapping between Kruti Dev 010 and 011
+            if (fontVal === 'font-krutidev011') {
+                if (key === "'" && !shift) charToInsert = "श";
+                else if (key === "'" && shift) charToInsert = "ष";
+            } else if (fontVal === 'font-krutidev010') {
+                if (key === "'" && !shift) charToInsert = "ष";
+                else if (key === "'" && shift) charToInsert = "श";
+            }
+
+            // Anusvaar bindi on 'a' and Poorn Viram (|) on 'Shift + A'
+            if (key.toLowerCase() === 'a') {
+                if (!shift) {
+                    charToInsert = "ं"; // Anusvaar bindi
+                } else {
+                    charToInsert = "।"; // Poorn Viram
+                }
+            }
+
+            if (charToInsert) {
                 e.preventDefault();
-                let char = e.key;
-                let insertChar = krutiMapEngine[char] || char;
+                document.execCommand('insertText', false, charToInsert);
+                return;
+            }
+
+            // Standard Remington mapping fallback
+            const krutiMapEngine = {
+                'a': 'ks', 's': 's', 'd': 'd', 'f': 'f', 'g': 'g', 'h': 'h', 'j': 'j', 'k': 'k', 'l': 'l',
+                'q': 'q', 'w': 'w', 'e': 'e', 'r': 'r', 't': 't', 'y': 'y', 'u': 'u', 'i': 'i', 'o': 'o', 'p': 'p',
+                'z': 'z', 'x': 'x', 'c': 'c', 'v': 'v', 'b': 'b', 'n': 'n', 'm': 'm'
+            };
+
+            if (key.length === 1 && !e.ctrlKey && !e.altKey) {
+                e.preventDefault();
+                let insertChar = krutiMapEngine[key] || key;
                 document.execCommand('insertText', false, insertChar);
             }
         }
@@ -536,30 +593,84 @@
         students.forEach(s => {
             let paidSum = (s.feeHistory || []).reduce((a, b) => a + b.amount, 0);
             let dueFee = s.totalFee - paidSum;
+            let currentId = s.id || s.studentId;
 
             tbody.innerHTML += `
                 <tr>
-                    <td><input type="checkbox" class="stCheck" value="${s.id}"></td>
+                    <td><input type="checkbox" class="stCheck" value="${currentId}"></td>
                     <td><div class="photo-preview"></div></td>
                     <td><b>${s.studentId}</b><br><small>${s.password}</small></td>
                     <td>${s.name}</td>
-                    <td>${s.course}</td>
-                    <td>${s.contact}</td>
-                    <td>${s.qualification}</td>
-                    <td>Total: ₹${s.totalFee}<br><span class="fee-badge">Due: ₹${dueFee}</span></td>
-                    <td><button class="btn-success" onclick="addFeePrompt('${s.id}')">+ Fee</button></td>
+                    <td>${s.course || '-'}</td>
+                    <td>${s.contact || '-'}</td>
+                    <td>${s.qualification || '-'}</td>
+                    <td>Total: ₹${s.totalFee || 0}<br><span class="fee-badge">Due: ₹${dueFee}</span></td>
+                    <td><button class="btn-success" onclick="addFeePrompt('${currentId}')">+ Fee</button></td>
                     <td><small>${(s.feeHistory || []).map(f => `₹${f.amount} (${f.date})`).join('<br>')}</small></td>
-                    <td><button class="btn-danger" onclick="deleteStudent('${s.id}')">Delete</button></td>
+                    <td>
+                        <button class="btn-warning" style="padding: 3px 8px; font-size: 11px; margin-bottom: 4px;" onclick="openEditModal('${currentId}')">Edit</button><br>
+                        <button class="btn-danger" style="padding: 3px 8px; font-size: 11px;" onclick="deleteStudent('${currentId}')">Delete</button>
+                    </td>
                 </tr>
             `;
         });
+    }
+
+    // EDIT STUDENT DATA MODAL LOGIC
+    function openEditModal(id) {
+        const st = students.find(s => (s.id === id || s.studentId === id));
+        if (!st) return;
+
+        document.getElementById('editDocId').value = id;
+        document.getElementById('editStId').value = st.studentId;
+        document.getElementById('editStPass').value = st.password;
+        document.getElementById('editStName').value = st.name;
+        document.getElementById('editStCourse').value = st.course || '';
+        document.getElementById('editStContact').value = st.contact || '';
+        document.getElementById('editStQual').value = st.qualification || '';
+        document.getElementById('editStTotalFee').value = st.totalFee || 0;
+
+        document.getElementById('editStudentModal').style.display = 'flex';
+    }
+
+    function closeEditModal() {
+        document.getElementById('editStudentModal').style.display = 'none';
+    }
+
+    function saveEditedStudent() {
+        const id = document.getElementById('editDocId').value;
+        const updatedData = {
+            studentId: document.getElementById('editStId').value.trim(),
+            password: document.getElementById('editStPass').value.trim(),
+            name: document.getElementById('editStName').value.trim(),
+            course: document.getElementById('editStCourse').value.trim(),
+            contact: document.getElementById('editStContact').value.trim(),
+            qualification: document.getElementById('editStQual').value.trim(),
+            totalFee: parseFloat(document.getElementById('editStTotalFee').value) || 0
+        };
+
+        if (isFirebaseActive) {
+            db.collection("students").doc(id).update(updatedData).then(() => {
+                alert('Student data successfully updated!');
+                closeEditModal();
+            });
+        } else {
+            let st = students.find(s => (s.id === id || s.studentId === id));
+            if (st) {
+                Object.assign(st, updatedData);
+                localStorage.setItem('app_students', JSON.stringify(students));
+                renderStudents();
+                alert('Student data successfully updated!');
+                closeEditModal();
+            }
+        }
     }
 
     function deleteStudent(id) {
         if (isFirebaseActive) {
             db.collection("students").doc(id).delete();
         } else {
-            students = students.filter(s => s.id !== id);
+            students = students.filter(s => s.id !== id && s.studentId !== id);
             localStorage.setItem('app_students', JSON.stringify(students));
             renderStudents();
         }
@@ -570,7 +681,7 @@
         if (isFirebaseActive) {
             selected.forEach(id => db.collection("students").doc(id).delete());
         } else {
-            students = students.filter(s => !selected.includes(s.id));
+            students = students.filter(s => !selected.includes(s.id) && !selected.includes(s.studentId));
             localStorage.setItem('app_students', JSON.stringify(students));
             renderStudents();
         }
@@ -583,7 +694,7 @@
     function addFeePrompt(id) {
         const amt = parseFloat(prompt('Kitni fee jama karni hai?'));
         if (amt && amt > 0) {
-            let st = students.find(s => s.id === id);
+            let st = students.find(s => s.id === id || s.studentId === id);
             let updatedHistory = [...(st.feeHistory || []), { amount: amt, date: new Date().toLocaleDateString() }];
             
             if (isFirebaseActive) {
@@ -691,90 +802,69 @@
         const container = document.getElementById('p4DictationText');
         container.innerHTML = '';
         currentWordsList = text.trim().split(/\s+/);
-        
-        currentWordsList.forEach((word, idx) => {
-            const span = document.createElement('span');
-            span.className = 'steno-word';
-            span.id = `steno-word-${idx}`;
-            span.innerText = word;
-            container.appendChild(span);
+        currentWordsList.forEach((word, index) => {
+            container.innerHTML += `<span id="word-${index}" class="steno-word">${word}</span> `;
         });
     }
 
     function startDictationAudio() {
-        if (!currentWordsList || currentWordsList.length === 0) {
-            alert('Pehle Paragraph select karein!'); return;
-        }
+        if (!currentActiveText) { alert('Kripya pehle paragraph select karein!'); return; }
+        stopDictationAudio();
 
-        window.speechSynthesis.cancel();
-        const fullText = currentWordsList.join(' ');
-        let speechUtterance = new SpeechSynthesisUtterance(fullText);
+        let speedWpm = parseInt(document.getElementById('stenoSpeedSelect').value) || 80;
+        let wordIntervalMs = (60 / speedWpm) * 1000;
+
+        speechUtterance = new SpeechSynthesisUtterance(currentActiveText);
         speechUtterance.lang = 'hi-IN';
+        speechUtterance.rate = speedWpm > 100 ? 1.2 : 1.0;
 
-        const wpm = parseInt(document.getElementById('stenoSpeedSelect').value);
-        speechUtterance.rate = wpm / 100;
-
-        speechUtterance.onboundary = function(event) {
-            if (event.name === 'word') {
-                const charIndex = event.charIndex;
-                let accumulatedLength = 0;
-                
-                for (let i = 0; i < currentWordsList.length; i++) {
-                    accumulatedLength += currentWordsList[i].length + 1;
-                    if (charIndex < accumulatedLength) {
-                        highlightAndScrollWord(i);
-                        break;
-                    }
+        let currentIndex = 0;
+        highlightInterval = setInterval(() => {
+            document.querySelectorAll('.steno-word').forEach(el => el.classList.remove('highlight'));
+            if (currentIndex < currentWordsList.length) {
+                let targetSpan = document.getElementById(`word-${currentIndex}`);
+                if (targetSpan) {
+                    targetSpan.classList.add('highlight');
+                    targetSpan.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
+                currentIndex++;
+            } else {
+                clearInterval(highlightInterval);
             }
-        };
+        }, wordIntervalMs);
 
-        window.speechSynthesis.speak(speechUtterance);
-    }
-
-    function highlightAndScrollWord(index) {
-        document.querySelectorAll('.steno-word').forEach(w => w.classList.remove('highlight'));
-        const target = document.getElementById(`steno-word-${index}`);
-        if (target) {
-            target.classList.add('highlight');
-            target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
+        synth.speak(speechUtterance);
     }
 
     function stopDictationAudio() {
-        window.speechSynthesis.cancel();
-        document.querySelectorAll('.steno-word').forEach(w => w.classList.remove('highlight'));
+        if (synth) synth.cancel();
+        if (highlightInterval) clearInterval(highlightInterval);
+        document.querySelectorAll('.steno-word').forEach(el => el.classList.remove('highlight'));
     }
 
     function calculateStenoAccuracy() {
         const originalText = currentWordsList.join(' ');
-        const typedText = document.getElementById('p4ReTypeArea').innerText.trim();
+        const retypedText = document.getElementById('p4ReTypeArea').innerText.trim();
 
-        if (!typedText) { alert('Kripya Re-Type Box mein steno type karein!'); return; }
-
-        let origWords = originalText.replace(/[,—\-]/g, '').split(/\s+/);
-        let typedWords = typedText.replace(/[,—\-]/g, '').split(/\s+/);
+        const origWords = originalText.split(/\s+/);
+        const userWords = retypedText.split(/\s+/);
 
         let correctCount = 0;
         origWords.forEach((word, idx) => {
-            if (typedWords[idx] && typedWords[idx] === word) { correctCount++; }
+            if (userWords[idx] === word) correctCount++;
         });
 
-        let accuracy = Math.round((correctCount / origWords.length) * 100) || 0;
-        let errors = origWords.length - correctCount;
+        let accuracy = origWords.length > 0 ? ((correctCount / origWords.length) * 100).toFixed(2) : 0;
+        let mistakes = Math.abs(origWords.length - correctCount);
 
-        const resBox = document.getElementById('p4ResultBox');
-        const resDetails = document.getElementById('p4ResultDetails');
-
-        resDetails.innerHTML = `
+        document.getElementById('p4ResultBox').classList.remove('hidden');
+        document.getElementById('p4ResultDetails').innerHTML = `
             <p><b>Total Words:</b> ${origWords.length}</p>
             <p><b>Correct Words:</b> ${correctCount}</p>
-            <p><b>Errors / Mistakes:</b> ${errors}</p>
-            <p><b>Accuracy:</b> <span style="color:${accuracy > 85 ? 'green' : 'red'}; font-weight:bold;">${accuracy}%</span></p>
+            <p><b>Mistakes:</b> ${mistakes}</p>
+            <p><b>Accuracy:</b> <span style="color: ${accuracy > 80 ? 'green' : 'red'}; font-weight:bold;">${accuracy}%</span></p>
         `;
-        resBox.classList.remove('hidden');
     }
 </script>
-
 </body>
 </html>
