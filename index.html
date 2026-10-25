@@ -65,7 +65,7 @@
         /* Result Box */
         .result-box { background: #e2e3e5; border-left: 4px solid #007bff; padding: 15px; margin-top: 15px; border-radius: 4px; }
 
-        /* Fonts for Typing Area (Applied to Textareas) */
+        /* Fonts for Typing Area */
         .font-mangal { font-family: 'Tiro Devanagari Hindi', 'Arial', sans-serif !important; font-size: 18px; }
         .font-krutidev010 { font-family: 'KrutiDev', 'Kruti Dev 010', sans-serif !important; font-size: 20px; font-weight: normal !important; }
         .font-krutidev011 { font-family: 'KrutiDev', 'Kruti Dev 010', sans-serif !important; font-size: 20px; font-weight: bold !important; }
@@ -398,7 +398,7 @@
     let speechUtterance = null;
     let highlightInterval = null;
 
-    // FOOLPROOF REMINGTON ENGINE FOR TEXTAREA (KRUTIDEV 010 & 011)
+    // FOOLPROOF REMINGTON ENGINE FOR TEXTAREA (CATCHING BOTH 'a', 'KeyA', AND OS-MAPPED 'ड' / 'ड़')
     function handleRemingtonEngine(e, selectId, element) {
         const fontVal = document.getElementById(selectId).value;
         if (fontVal === 'font-krutidev010' || fontVal === 'font-krutidev011' || fontVal === 'font-devlys') {
@@ -415,8 +415,8 @@
                 }
             }
 
-            // 2. 'A' / 'a' KEY HANDLING (Anusvaar / Poorn Viram) - 100% GUARANTEED
-            if (e.code === "KeyA" || key.toLowerCase() === 'a') {
+            // 2. 'A' / 'a' KEY & OS-IME OVERRIDE HANDLING ('ड', 'ड़') - 100% BULLETPROOF
+            if (e.code === "KeyA" || key.toLowerCase() === 'a' || key === 'ड' || key === 'ड़' || key === 'डॅ') {
                 insertChar = shift ? "A" : "M"; // Shift + A = Poorn Viram ('A'), Simple A = Anusvaar ('M')
             }
 
@@ -708,7 +708,7 @@
     function saveParagraph() {
         const cat = document.getElementById('paraCategory').value;
         const title = document.getElementById('paraTitle').value.trim();
-        const content = document.getElementById('paraContent').value.trim(); // Updated for textarea
+        const content = document.getElementById('paraContent').value.trim();
 
         if (!title || !content) { alert('Title aur Content bharein!'); return; }
 
@@ -842,7 +842,7 @@
 
     function calculateStenoAccuracy() {
         const originalText = currentWordsList.join(' ');
-        const retypedText = document.getElementById('p4ReTypeArea').value.trim(); // Updated for textarea
+        const retypedText = document.getElementById('p4ReTypeArea').value.trim();
 
         const origWords = originalText.split(/\s+/);
         const userWords = retypedText.split(/\s+/);
