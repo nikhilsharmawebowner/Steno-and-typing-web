@@ -65,13 +65,13 @@
         /* Result Box */
         .result-box { background: #e2e3e5; border-left: 4px solid #007bff; padding: 15px; margin-top: 15px; border-radius: 4px; }
 
-        /* Fonts for Typing Area */
-        .font-mangal { font-family: 'Tiro Devanagari Hindi', 'Arial', sans-serif !important; }
-        .font-krutidev010 { font-family: 'KrutiDev', 'Kruti Dev 010', sans-serif !important; }
-        .font-krutidev011 { font-family: 'KrutiDev', 'Kruti Dev 010', sans-serif !important; }
-        .font-devlys { font-family: 'Devlys', 'Devlys 010', sans-serif !important; }
+        /* Fonts for Typing Area (Applied to Textareas) */
+        .font-mangal { font-family: 'Tiro Devanagari Hindi', 'Arial', sans-serif !important; font-size: 18px; }
+        .font-krutidev010 { font-family: 'KrutiDev', 'Kruti Dev 010', sans-serif !important; font-size: 20px; font-weight: normal !important; }
+        .font-krutidev011 { font-family: 'KrutiDev', 'Kruti Dev 010', sans-serif !important; font-size: 20px; font-weight: bold !important; }
+        .font-devlys { font-family: 'Devlys', 'Devlys 010', sans-serif !important; font-size: 20px; font-weight: normal !important; }
 
-        .custom-editor { min-height: 120px; background: white; outline: none; white-space: pre-wrap; word-wrap: break-word; overflow-y: auto; }
+        .custom-editor { min-height: 120px; background: white; outline: none; resize: vertical; box-sizing: border-box; line-height: 1.6; }
 
         /* Modal Overlay for Editing Student Data */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 2000; }
@@ -172,7 +172,7 @@
             <div><label>Title</label><input type="text" id="paraTitle" placeholder="Paragraph Title"></div>
             <div style="grid-column: span 2;">
                 <label>Content</label>
-                <div id="paraContent" class="custom-editor font-mangal" contenteditable="true" onkeydown="handleRemingtonEngine(event, 'ownerParaFontSelect', this)"></div>
+                <textarea id="paraContent" class="custom-editor font-mangal" rows="5" placeholder="Type paragraph here..." onkeydown="handleRemingtonEngine(event, 'ownerParaFontSelect', this)"></textarea>
             </div>
         </div>
         <button class="btn-success" onclick="saveParagraph()">Save Paragraph</button>
@@ -284,7 +284,7 @@
 
         <h3>Re-Type Box (Type Steno Notes Here in Hindi)</h3>
         <p><small>Audio dictation sunkar banayi gayi steno ko yahan re-type karein:</small></p>
-        <div id="p4ReTypeArea" class="custom-editor font-mangal" contenteditable="true" onkeydown="handleRemingtonEngine(event, 'stenoFontSelect', this)"></div>
+        <textarea id="p4ReTypeArea" class="custom-editor font-mangal" rows="6" placeholder="Yahan steno type karein..." onkeydown="handleRemingtonEngine(event, 'stenoFontSelect', this)"></textarea>
 
         <button class="btn-warning" style="margin-top: 10px; font-weight: bold;" onclick="calculateStenoAccuracy()">Check Accuracy & Mistakes</button>
 
@@ -314,7 +314,7 @@
     </div>
     <div class="page-box">
         <h3>Hindi Typing Area</h3>
-        <div id="p5TypingArea" class="custom-editor font-mangal" contenteditable="true" onkeydown="handleRemingtonEngine(event, 'p5FontSelect', this)"></div>
+        <textarea id="p5TypingArea" class="custom-editor font-mangal" rows="6" placeholder="Yahan hindi typing karein..." onkeydown="handleRemingtonEngine(event, 'p5FontSelect', this)"></textarea>
     </div>
 </div>
 
@@ -398,49 +398,47 @@
     let speechUtterance = null;
     let highlightInterval = null;
 
-    // DIRECT ASCII KRUTI DEV REMINGTON ENGINE MAP (WITH DECOUPLED 010 & 011 MAPPING)
+    // FOOLPROOF REMINGTON ENGINE FOR TEXTAREA (KRUTIDEV 010 & 011)
     function handleRemingtonEngine(e, selectId, element) {
         const fontVal = document.getElementById(selectId).value;
         if (fontVal === 'font-krutidev010' || fontVal === 'font-krutidev011' || fontVal === 'font-devlys') {
             let key = e.key;
             let shift = e.shiftKey;
-            let charToInsert = null;
+            let insertChar = null;
 
-            // Decoupling quote (') key mapping between Kruti Dev 010 and 011
-            if (fontVal === 'font-krutidev011') {
-                if (key === "'" && !shift) charToInsert = "श";
-                else if (key === "'" && shift) charToInsert = "ष";
-            } else if (fontVal === 'font-krutidev010') {
-                if (key === "'" && !shift) charToInsert = "ष";
-                else if (key === "'" && shift) charToInsert = "श";
-            }
-
-            // Anusvaar bindi on 'a' and Poorn Viram (|) on 'Shift + A'
-            if (key.toLowerCase() === 'a') {
-                if (!shift) {
-                    charToInsert = "ं"; // Anusvaar bindi
-                } else {
-                    charToInsert = "।"; // Poorn Viram
+            // 1. QUOTE KEY (') HANDLING
+            if (e.code === "Quote") {
+                if (fontVal === 'font-krutidev010') {
+                    insertChar = shift ? "'" : '"';  // 010: single = 'श्', shift+single = 'ष'
+                } else if (fontVal === 'font-krutidev011') {
+                    insertChar = shift ? '"' : "'";  // 011: single = 'ष', shift+single = 'श्'
                 }
             }
 
-            if (charToInsert) {
-                e.preventDefault();
-                document.execCommand('insertText', false, charToInsert);
-                return;
+            // 2. 'A' / 'a' KEY HANDLING (Anusvaar / Poorn Viram) - 100% GUARANTEED
+            if (e.code === "KeyA" || key.toLowerCase() === 'a') {
+                insertChar = shift ? "A" : "M"; // Shift + A = Poorn Viram ('A'), Simple A = Anusvaar ('M')
             }
 
-            // Standard Remington mapping fallback
+            // 3. OTHER ALPHABET / KEY MAPPINGS
             const krutiMapEngine = {
-                'a': 'ks', 's': 's', 'd': 'd', 'f': 'f', 'g': 'g', 'h': 'h', 'j': 'j', 'k': 'k', 'l': 'l',
+                's': 's', 'd': 'd', 'f': 'f', 'g': 'g', 'h': 'h', 'j': 'j', 'k': 'k', 'l': 'l',
                 'q': 'q', 'w': 'w', 'e': 'e', 'r': 'r', 't': 't', 'y': 'y', 'u': 'u', 'i': 'i', 'o': 'o', 'p': 'p',
                 'z': 'z', 'x': 'x', 'c': 'c', 'v': 'v', 'b': 'b', 'n': 'n', 'm': 'm'
             };
 
-            if (key.length === 1 && !e.ctrlKey && !e.altKey) {
+            if (insertChar === null && key.length === 1 && !e.ctrlKey && !e.altKey) {
+                insertChar = krutiMapEngine[key.toLowerCase()] || key;
+            }
+
+            if (insertChar !== null) {
                 e.preventDefault();
-                let insertChar = krutiMapEngine[key] || key;
-                document.execCommand('insertText', false, insertChar);
+                // Direct Textarea Cursor & Selection Insertion
+                const start = element.selectionStart;
+                const end = element.selectionEnd;
+                const val = element.value;
+                element.value = val.substring(0, start) + insertChar + val.substring(end);
+                element.selectionStart = element.selectionEnd = start + insertChar.length;
             }
         }
     }
@@ -710,7 +708,7 @@
     function saveParagraph() {
         const cat = document.getElementById('paraCategory').value;
         const title = document.getElementById('paraTitle').value.trim();
-        const content = document.getElementById('paraContent').innerText.trim();
+        const content = document.getElementById('paraContent').value.trim(); // Updated for textarea
 
         if (!title || !content) { alert('Title aur Content bharein!'); return; }
 
@@ -844,7 +842,7 @@
 
     function calculateStenoAccuracy() {
         const originalText = currentWordsList.join(' ');
-        const retypedText = document.getElementById('p4ReTypeArea').innerText.trim();
+        const retypedText = document.getElementById('p4ReTypeArea').value.trim(); // Updated for textarea
 
         const origWords = originalText.split(/\s+/);
         const userWords = retypedText.split(/\s+/);
