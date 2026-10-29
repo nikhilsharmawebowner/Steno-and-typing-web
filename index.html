@@ -271,7 +271,7 @@
         <h3>Paragraph Dictation Player Box</h3>
         <p><b>Original Dictation Text Preview (Word Highlight & Auto-Scroll Enabled):</b></p>
         
-        <div id="p4DictationText" class="dictation-display-box">
+        <div id="p4DictationText" class="dictation-display-box font-mangal">
             <em>Kripya Column 1 se paragraph select karein...</em>
         </div>
 
@@ -389,7 +389,7 @@
     let ownerCreds = JSON.parse(localStorage.getItem('app_owner_creds')) || { id: 'new owner', pass: 'new1234' };
     let students = JSON.parse(localStorage.getItem('app_students')) || [];
     let paragraphs = JSON.parse(localStorage.getItem('app_paragraphs')) || [
-        { id: '1', category: 'Hindi Steno', title: 'Sample Hindi Steno 1', content: 'भारत एक महान देश है। यहाँ की संस्कृति और परंपराएँ दुनिया भर में प्रसिद्ध हैं। स्टेनोग्राफी सीखना एक कला है जो निरंतर अभ्यास से आती है। मेहनत और निष्ठा से हर लक्ष्य को प्राप्त किया जा सकता है।' }
+        { id: '1', category: 'Hindi Steno', title: 'Sample Hindi Steno 1', content: 'भारत एक महान देश है। यहाँ की संस्कृति और परंपराएँ दुनिया भर में प्रसिद्ध हैं। स्टेनोग्राफी सीखना एक कला है जो निरंतर अभ्यास से आती है। मेहनत और निष्ठा से हर लक्ष्य को प्राप्त किया जा सकता है।', font: 'font-mangal' }
     ];
     let currentUserRole = '';
     let currentActiveText = '';
@@ -407,9 +407,8 @@
             let shift = e.shiftKey;
             let insertChar = null;
 
-            // Agar physical 'A' key dabayi gayi hai ya OS ne 'ड'/'ड़' bhej diya hai
             if (code === "KeyA" || key.toLowerCase() === 'a' || key === 'ड' || key === 'ड़') {
-                insertChar = shift ? "A" : "a"; // Shift + A = Poorn Viram ('A'), Simple A = Anusvaar ('M' / aangh ki bindi)
+                insertChar = shift ? "A" : "a";
             }
 
             if (insertChar !== null) {
@@ -688,10 +687,11 @@
         const cat = document.getElementById('paraCategory').value;
         const title = document.getElementById('paraTitle').value.trim();
         const content = document.getElementById('paraContent').value.trim();
+        const font = document.getElementById('ownerParaFontSelect').value;
 
         if (!title || !content) { alert('Title aur Content bharein!'); return; }
 
-        const newPara = { category: cat, title, content };
+        const newPara = { category: cat, title, content, font };
 
         if (isFirebaseActive) {
             db.collection("paragraphs").add(newPara).then(() => {
@@ -711,11 +711,12 @@
         const tbody = document.getElementById('paragraphTableBody');
         tbody.innerHTML = '';
         paragraphs.forEach(p => {
+            const previewFont = p.font || 'font-mangal';
             tbody.innerHTML += `
                 <tr>
                     <td>${p.category}</td>
                     <td>${p.title}</td>
-                    <td>${p.content.substring(0, 40)}...</td>
+                    <td class="${previewFont}">${p.content.substring(0, 40)}...</td>
                     <td><button class="btn-danger" onclick="deleteParagraph('${p.id}')">Remove</button></td>
                 </tr>
             `;
@@ -764,6 +765,12 @@
         if (p) {
             currentActiveText = p.content;
             renderInteractiveWords(currentActiveText);
+            
+            // Apply correct saved font to dictation display box & retype textarea
+            const targetFont = p.font || 'font-mangal';
+            document.getElementById('p4DictationText').className = 'dictation-display-box ' + targetFont;
+            document.getElementById('p4ReTypeArea').className = 'custom-editor ' + targetFont;
+            document.getElementById('stenoFontSelect').value = targetFont;
         }
     }
 
