@@ -407,8 +407,9 @@
             let shift = e.shiftKey;
             let insertChar = null;
 
+            // Agar physical 'A' key dabayi gayi hai ya OS ne 'ड'/'ड़' bhej diya hai
             if (code === "KeyA" || key.toLowerCase() === 'a' || key === 'ड' || key === 'ड़') {
-                insertChar = shift ? "A" : "a";
+                insertChar = shift ? "A" : "a"; // Shift + A = Poorn Viram ('A'), Simple A = Anusvaar ('M' / aangh ki bindi)
             }
 
             if (insertChar !== null) {
@@ -687,7 +688,7 @@
         const cat = document.getElementById('paraCategory').value;
         const title = document.getElementById('paraTitle').value.trim();
         const content = document.getElementById('paraContent').value.trim();
-        const font = document.getElementById('ownerParaFontSelect').value;
+        const font = document.getElementById('ownerParaFontSelect').value; // Saved selected font
 
         if (!title || !content) { alert('Title aur Content bharein!'); return; }
 
@@ -711,7 +712,7 @@
         const tbody = document.getElementById('paragraphTableBody');
         tbody.innerHTML = '';
         paragraphs.forEach(p => {
-            const previewFont = p.font || 'font-mangal';
+            const previewFont = p.font || 'font-mangal'; // Applied saved font to table preview
             tbody.innerHTML += `
                 <tr>
                     <td>${p.category}</td>
@@ -766,7 +767,7 @@
             currentActiveText = p.content;
             renderInteractiveWords(currentActiveText);
             
-            // Apply correct saved font to dictation display box & retype textarea
+            // Applied correct saved font to dictation display box and retype area
             const targetFont = p.font || 'font-mangal';
             document.getElementById('p4DictationText').className = 'dictation-display-box ' + targetFont;
             document.getElementById('p4ReTypeArea').className = 'custom-editor ' + targetFont;
