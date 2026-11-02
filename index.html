@@ -688,7 +688,7 @@
         const cat = document.getElementById('paraCategory').value;
         const title = document.getElementById('paraTitle').value.trim();
         const content = document.getElementById('paraContent').value.trim();
-        const font = document.getElementById('ownerParaFontSelect').value; // Saved selected font
+        const font = document.getElementById('ownerParaFontSelect').value;
 
         if (!title || !content) { alert('Title aur Content bharein!'); return; }
 
@@ -712,7 +712,7 @@
         const tbody = document.getElementById('paragraphTableBody');
         tbody.innerHTML = '';
         paragraphs.forEach(p => {
-            const previewFont = p.font || 'font-mangal'; // Applied saved font to table preview
+            const previewFont = p.font || 'font-mangal';
             tbody.innerHTML += `
                 <tr>
                     <td>${p.category}</td>
@@ -767,7 +767,6 @@
             currentActiveText = p.content;
             renderInteractiveWords(currentActiveText);
             
-            // Applied correct saved font to dictation display box and retype area
             const targetFont = p.font || 'font-mangal';
             document.getElementById('p4DictationText').className = 'dictation-display-box ' + targetFont;
             document.getElementById('p4ReTypeArea').className = 'custom-editor ' + targetFont;
@@ -801,7 +800,7 @@
 
         speechUtterance = new SpeechSynthesisUtterance(currentActiveText);
         speechUtterance.lang = 'hi-IN';
-        speechUtterance.rate = speedWpm > 100 ? 1.2 : 1.0;
+        speechUtterance.rate = Math.max(0.5, Math.min(3.0, speedWpm / 80));
 
         let currentIndex = 0;
         highlightInterval = setInterval(() => {
