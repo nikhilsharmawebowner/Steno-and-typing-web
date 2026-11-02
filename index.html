@@ -12,8 +12,16 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
     <style>
-        @font-face { font-family: 'KrutiDev'; src: local('Kruti Dev 010'), url('https://fonts.cdnfonts.com/s/18151/KrutiDev010.woff') format('woff'); }
-        @font-face { font-family: 'Devlys'; src: local('Devlys 010'), url('https://fonts.cdnfonts.com/s/18151/Devlys010.woff') format('woff'); }
+        @font-face { 
+            font-family: 'KrutiDev'; 
+            src: local('Kruti Dev 010'), local('KrutiDev 010'), url('https://fonts.cdnfonts.com/s/18151/KrutiDev010.woff') format('woff'); 
+            font-display: swap;
+        }
+        @font-face { 
+            font-family: 'Devlys'; 
+            src: local('Devlys 010'), local('Devlys010'), url('https://fonts.cdnfonts.com/s/18151/Devlys010.woff') format('woff'); 
+            font-display: swap;
+        }
 
         body { font-family: Arial, sans-serif; background: #eef2f5; margin: 0; padding: 20px; }
         .hidden { display: none !important; }
@@ -65,11 +73,11 @@
         /* Result Box */
         .result-box { background: #e2e3e5; border-left: 4px solid #007bff; padding: 15px; margin-top: 15px; border-radius: 4px; }
 
-        /* Fonts for Typing Area */
-        .font-mangal { font-family: 'Tiro Devanagari Hindi', 'Arial', sans-serif !important; font-size: 18px; }
-        .font-krutidev010 { font-family: 'KrutiDev', 'Kruti Dev 010', sans-serif !important; font-size: 20px; font-weight: normal !important; }
-        .font-krutidev011 { font-family: 'KrutiDev', 'Kruti Dev 010', sans-serif !important; font-size: 20px; font-weight: bold !important; }
-        .font-devlys { font-family: 'Devlys', 'Devlys 010', sans-serif !important; font-size: 20px; font-weight: normal !important; }
+        /* Fonts for Typing Area and Table Previews */
+        .font-mangal, td.font-mangal { font-family: 'Tiro Devanagari Hindi', 'Arial', sans-serif !important; font-size: 18px; }
+        .font-krutidev010, td.font-krutidev010 { font-family: 'KrutiDev', 'Kruti Dev 010', sans-serif !important; font-size: 20px; font-weight: normal !important; }
+        .font-krutidev011, td.font-krutidev011 { font-family: 'KrutiDev', 'Kruti Dev 010', sans-serif !important; font-size: 20px; font-weight: bold !important; }
+        .font-devlys, td.font-devlys { font-family: 'Devlys', 'Devlys 010', sans-serif !important; font-size: 20px; font-weight: normal !important; }
 
         .custom-editor { min-height: 120px; background: white; outline: none; resize: vertical; box-sizing: border-box; line-height: 1.6; }
 
