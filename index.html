@@ -12,16 +12,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
     <style>
-        @font-face { 
-            font-family: 'KrutiDev'; 
-            src: local('Kruti Dev 010'), local('KrutiDev 010'), url('https://fonts.cdnfonts.com/s/18151/KrutiDev010.woff') format('woff'); 
-            font-display: swap;
-        }
-        @font-face { 
-            font-family: 'Devlys'; 
-            src: local('Devlys 010'), local('Devlys010'), url('https://fonts.cdnfonts.com/s/18151/Devlys010.woff') format('woff'); 
-            font-display: swap;
-        }
+        @font-face { font-family: 'KrutiDev'; src: local('Kruti Dev 010'), url('https://fonts.cdnfonts.com/s/18151/KrutiDev010.woff') format('woff'); }
+        @font-face { font-family: 'Devlys'; src: local('Devlys 010'), url('https://fonts.cdnfonts.com/s/18151/Devlys010.woff') format('woff'); }
 
         body { font-family: Arial, sans-serif; background: #eef2f5; margin: 0; padding: 20px; }
         .hidden { display: none !important; }
@@ -73,11 +65,11 @@
         /* Result Box */
         .result-box { background: #e2e3e5; border-left: 4px solid #007bff; padding: 15px; margin-top: 15px; border-radius: 4px; }
 
-        /* Fonts for Typing Area and Table Previews */
-        .font-mangal, td.font-mangal { font-family: 'Tiro Devanagari Hindi', 'Arial', sans-serif !important; font-size: 18px; }
-        .font-krutidev010, td.font-krutidev010 { font-family: 'KrutiDev', 'Kruti Dev 010', sans-serif !important; font-size: 20px; font-weight: normal !important; }
-        .font-krutidev011, td.font-krutidev011 { font-family: 'KrutiDev', 'Kruti Dev 010', sans-serif !important; font-size: 20px; font-weight: bold !important; }
-        .font-devlys, td.font-devlys { font-family: 'Devlys', 'Devlys 010', sans-serif !important; font-size: 20px; font-weight: normal !important; }
+        /* Fonts for Typing Area */
+        .font-mangal { font-family: 'Tiro Devanagari Hindi', 'Arial', sans-serif !important; font-size: 18px; }
+        .font-krutidev010 { font-family: 'KrutiDev', 'Kruti Dev 010', sans-serif !important; font-size: 20px; font-weight: normal !important; }
+        .font-krutidev011 { font-family: 'KrutiDev', 'Kruti Dev 010', sans-serif !important; font-size: 20px; font-weight: bold !important; }
+        .font-devlys { font-family: 'Devlys', 'Devlys 010', sans-serif !important; font-size: 20px; font-weight: normal !important; }
 
         .custom-editor { min-height: 120px; background: white; outline: none; resize: vertical; box-sizing: border-box; line-height: 1.6; }
 
@@ -406,6 +398,23 @@
     let speechUtterance = null;
     let highlightInterval = null;
 
+    // KRUTIDEV TO UNICODE AUTO CONVERTER ENGINE (PERMANENT MULTI-DEVICE FIX)
+    function convertKrutiToUnicode(text) {
+        if (!text) return "";
+        let kmap = {
+            'k': 'ा', 'l': 'ि', 'd': 'ी', 'f': 'ु', 'g': 'ू', 'h': 'े', 'i': 'ै', 'o': 'ो', 'p': 'ौ',
+            's': 'ः', 'a': 'ं', 'A': '।', 'v': 'अ', 'vk': 'आ', 'b': 'इ', 'c': 'म', 'j': 'र', 'u': 'ह',
+            'n': 'द', 'm': 'उ', 'e': 'म', 'r': 'त', 't': 'ज', 'y': 'ल', 'w': 'ू', 'q': 'ु', 'x': 'ग',
+            'z': '्र', 'C': 'ण', 'V': 'ट', 'B': 'ठ', 'N': 'छ', 'M': 'ड', 'K': 'ज्ञ', 'L': 'द्व',
+            'I': 'क्ष', 'O': 'ऑ', 'P': 'फ', 'U': 'ह', 'Y': 'ल', 'T': 'ज', 'R': 'त', 'E': 'म', 'W': 'ौ', 'Q': 'फ'
+        };
+        let out = text;
+        for (let key in kmap) {
+            out = out.split(key).join(kmap[key]);
+        }
+        return out;
+    }
+
     // HARDCORE KRUTIDEV MAPPING ENGINE (FORCING ANUSVAAR 'M' ON 'A' KEY WHEN KRUTIDEV SELECTED)
     function handleKrutiDevEngine(e, selectId, element) {
         const fontVal = document.getElementById(selectId).value;
@@ -415,9 +424,8 @@
             let shift = e.shiftKey;
             let insertChar = null;
 
-            // Agar physical 'A' key dabayi gayi hai ya OS ne 'ड'/'ड़' bhej diya hai
             if (code === "KeyA" || key.toLowerCase() === 'a' || key === 'ड' || key === 'ड़') {
-                insertChar = shift ? "A" : "a"; // Shift + A = Poorn Viram ('A'), Simple A = Anusvaar ('M' / aangh ki bindi)
+                insertChar = shift ? "A" : "a"; 
             }
 
             if (insertChar !== null) {
@@ -695,10 +703,17 @@
     function saveParagraph() {
         const cat = document.getElementById('paraCategory').value;
         const title = document.getElementById('paraTitle').value.trim();
-        const content = document.getElementById('paraContent').value.trim();
+        let content = document.getElementById('paraContent').value.trim();
         const font = document.getElementById('ownerParaFontSelect').value;
 
         if (!title || !content) { alert('Title aur Content bharein!'); return; }
+
+        // If KrutiDev was used, auto-convert raw keys to clean Unicode for cross-device consistency
+        if (font === 'font-krutidev010' || font === 'font-krutidev011' || font === 'font-devlys') {
+            if (/^[a-zA-Z0-9\s.,;:'"?\/\\!@#$%^&*()_\-+=~`<>{}\[\]|]+$/.test(content)) {
+                content = convertKrutiToUnicode(content);
+            }
+        }
 
         const newPara = { category: cat, title, content, font };
 
@@ -720,12 +735,11 @@
         const tbody = document.getElementById('paragraphTableBody');
         tbody.innerHTML = '';
         paragraphs.forEach(p => {
-            const previewFont = p.font || 'font-mangal';
             tbody.innerHTML += `
                 <tr>
                     <td>${p.category}</td>
                     <td>${p.title}</td>
-                    <td class="${previewFont}">${p.content.substring(0, 40)}...</td>
+                    <td class="font-mangal">${p.content.substring(0, 40)}...</td>
                     <td><button class="btn-danger" onclick="deleteParagraph('${p.id}')">Remove</button></td>
                 </tr>
             `;
@@ -775,8 +789,8 @@
             currentActiveText = p.content;
             renderInteractiveWords(currentActiveText);
             
+            document.getElementById('p4DictationText').className = 'dictation-display-box font-mangal';
             const targetFont = p.font || 'font-mangal';
-            document.getElementById('p4DictationText').className = 'dictation-display-box ' + targetFont;
             document.getElementById('p4ReTypeArea').className = 'custom-editor ' + targetFont;
             document.getElementById('stenoFontSelect').value = targetFont;
         }
