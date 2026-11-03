@@ -295,26 +295,64 @@
     </div>
 </div>
 
-<!-- PAGE 5: HINDI TYPING -->
+<!-- PAGE 5: HINDI TYPING (COPIED EXACT PAGE 4 DESIGN & FUNCTIONS) -->
 <div id="page5" class="container hidden">
     <div class="header">
-        <h2>Page 5: Hindi Typing Practice</h2>
-        <button style="width:auto;" onclick="backToDashboard()">Back</button>
+        <h2>Page 5: Hindi Typing Test & Practice</h2>
+        <button style="width:auto;" onclick="backToDashboard()">Back to Dashboard</button>
     </div>
-    <div class="form-grid" style="background: #f0f7ff;">
+
+    <div class="form-grid" style="background: #f0f7ff; border: 1px solid #cce5ff;">
         <div>
-            <label>Select Font</label>
+            <label style="color:#0056b3;"><b>Column 1: Select Paragraph</b></label>
+            <select id="p5ParaSelect" onchange="loadSelectedP5Para()">
+                <option value="">-- Choose Paragraph --</option>
+            </select>
+        </div>
+        <div>
+            <label style="color:#0056b3;"><b>Column 2: Typing Speed</b></label>
+            <select id="p5SpeedSelect"></select>
+        </div>
+        <div>
+            <label style="color:#0056b3;"><b>Column 3: Word Limit</b></label>
+            <select id="p5WordLimitSelect" onchange="applyWordLimitToP5Para()"></select>
+        </div>
+        <div>
+            <label style="color:#0056b3;"><b>Column 4: Select Hindi Font</b></label>
             <select id="p5FontSelect" onchange="changeTypingFont('p5TypingArea', this.value)">
-                <option value="font-mangal">Mangal</option>
-                <option value="font-krutidev011">Kruti Dev 011</option>
-                <option value="font-krutidev010">Kruti Dev 010</option>
+                <option value="font-mangal">Mangal (Unicode / Inscript)</option>
+                <option value="font-krutidev011">Kruti Dev 011 (Remington)</option>
+                <option value="font-krutidev010">Kruti Dev 010 (Remington)</option>
                 <option value="font-devlys">Devlys 010</option>
             </select>
         </div>
     </div>
+
     <div class="page-box">
-        <h3>Hindi Typing Area</h3>
+        <h3>Paragraph Player Box</h3>
+        <p><b>Original Text Preview (Word Highlight & Auto-Scroll Enabled):</b></p>
+        
+        <div id="p5DictationText" class="dictation-display-box font-mangal">
+            <em>Kripya Column 1 se paragraph select karein...</em>
+        </div>
+
+        <div style="margin-top: 15px; display: flex; gap: 10px; align-items: center;">
+            <button class="btn-success" style="width: auto; padding: 8px 16px;" onclick="startP5Audio()">▶ Play Audio</button>
+            <button class="btn-danger" style="width: auto; padding: 8px 16px;" onclick="stopP5Audio()">⏹️ Stop Audio</button>
+        </div>
+
+        <hr style="margin: 20px 0;">
+
+        <h3>Typing Area (Type Here in Hindi)</h3>
+        <p><small>(Kruti Dev 010/011 select hone par 'A' dabane par 100% aangh ki bindi 'M' aayegi)</small></p>
         <textarea id="p5TypingArea" class="custom-editor font-mangal" rows="6" placeholder="Yahan hindi typing karein..." onkeydown="handleKrutiDevEngine(event, 'p5FontSelect', this)"></textarea>
+
+        <button class="btn-warning" style="margin-top: 10px; font-weight: bold;" onclick="calculateP5Accuracy()">Check Accuracy & Mistakes</button>
+
+        <div id="p5ResultBox" class="result-box hidden">
+            <h4>Performance Result:</h4>
+            <div id="p5ResultDetails"></div>
+        </div>
     </div>
 </div>
 
@@ -394,26 +432,16 @@
     let currentUserRole = '';
     let currentActiveText = '';
     let currentWordsList = [];
+    
+    // Page 5 variables
+    let currentP5ActiveText = '';
+    let currentP5WordsList = [];
+    let p5SpeechUtterance = null;
+    let p5HighlightInterval = null;
+
     let synth = window.speechSynthesis;
     let speechUtterance = null;
     let highlightInterval = null;
-
-    // KRUTIDEV TO UNICODE AUTO CONVERTER ENGINE (PERMANENT MULTI-DEVICE FIX)
-    function convertKrutiToUnicode(text) {
-        if (!text) return "";
-        let kmap = {
-            'k': 'ा', 'l': 'ि', 'd': 'ी', 'f': 'ु', 'g': 'ू', 'h': 'े', 'i': 'ै', 'o': 'ो', 'p': 'ौ',
-            's': 'ः', 'a': 'ं', 'A': '।', 'v': 'अ', 'vk': 'आ', 'b': 'इ', 'c': 'म', 'j': 'र', 'u': 'ह',
-            'n': 'द', 'm': 'उ', 'e': 'म', 'r': 'त', 't': 'ज', 'y': 'ल', 'w': 'ू', 'q': 'ु', 'x': 'ग',
-            'z': '्र', 'C': 'ण', 'V': 'ट', 'B': 'ठ', 'N': 'छ', 'M': 'ड', 'K': 'ज्ञ', 'L': 'द्व',
-            'I': 'क्ष', 'O': 'ऑ', 'P': 'फ', 'U': 'ह', 'Y': 'ल', 'T': 'ज', 'R': 'त', 'E': 'म', 'W': 'ौ', 'Q': 'फ'
-        };
-        let out = text;
-        for (let key in kmap) {
-            out = out.split(key).join(kmap[key]);
-        }
-        return out;
-    }
 
     // HARDCORE KRUTIDEV MAPPING ENGINE (FORCING ANUSVAAR 'M' ON 'A' KEY WHEN KRUTIDEV SELECTED)
     function handleKrutiDevEngine(e, selectId, element) {
@@ -446,6 +474,7 @@
             renderStudents();
             renderParagraphs();
             loadStenoParagraphs();
+            loadP5Paragraphs();
         }
         populateSpeedDropdown();
         populateWordLimitDropdown();
@@ -469,6 +498,7 @@
             localStorage.setItem('app_paragraphs', JSON.stringify(paragraphs));
             renderParagraphs();
             loadStenoParagraphs();
+            loadP5Paragraphs();
         });
     }
 
@@ -514,6 +544,7 @@
 
     function backToDashboard() {
         stopDictationAudio();
+        stopP5Audio();
         hideAllPages();
         if (currentUserRole === 'owner') document.getElementById('ownerDashboard').classList.remove('hidden');
         else document.getElementById('studentDashboard').classList.remove('hidden');
@@ -703,17 +734,10 @@
     function saveParagraph() {
         const cat = document.getElementById('paraCategory').value;
         const title = document.getElementById('paraTitle').value.trim();
-        let content = document.getElementById('paraContent').value.trim();
+        const content = document.getElementById('paraContent').value.trim();
         const font = document.getElementById('ownerParaFontSelect').value;
 
         if (!title || !content) { alert('Title aur Content bharein!'); return; }
-
-        // If KrutiDev was used, auto-convert raw keys to clean Unicode for cross-device consistency
-        if (font === 'font-krutidev010' || font === 'font-krutidev011' || font === 'font-devlys') {
-            if (/^[a-zA-Z0-9\s.,;:'"?\/\\!@#$%^&*()_\-+=~`<>{}\[\]|]+$/.test(content)) {
-                content = convertKrutiToUnicode(content);
-            }
-        }
 
         const newPara = { category: cat, title, content, font };
 
@@ -727,6 +751,7 @@
             localStorage.setItem('app_paragraphs', JSON.stringify(paragraphs));
             renderParagraphs();
             loadStenoParagraphs();
+            loadP5Paragraphs();
             alert('Paragraph save ho gaya!');
         }
     }
@@ -735,11 +760,12 @@
         const tbody = document.getElementById('paragraphTableBody');
         tbody.innerHTML = '';
         paragraphs.forEach(p => {
+            const previewFont = p.font || 'font-mangal';
             tbody.innerHTML += `
                 <tr>
                     <td>${p.category}</td>
                     <td>${p.title}</td>
-                    <td class="font-mangal">${p.content.substring(0, 40)}...</td>
+                    <td class="${previewFont}">${p.content.substring(0, 40)}...</td>
                     <td><button class="btn-danger" onclick="deleteParagraph('${p.id}')">Remove</button></td>
                 </tr>
             `;
@@ -754,30 +780,64 @@
             localStorage.setItem('app_paragraphs', JSON.stringify(paragraphs));
             renderParagraphs();
             loadStenoParagraphs();
+            loadP5Paragraphs();
         }
     }
 
     function populateSpeedDropdown() {
+        // Page 4 speed
         const select = document.getElementById('stenoSpeedSelect');
-        select.innerHTML = '';
-        for (let wpm = 30; wpm <= 180; wpm += 10) {
-            select.innerHTML += `<option value="${wpm}">${wpm} WPM</option>`;
+        if(select) {
+            select.innerHTML = '';
+            for (let wpm = 30; wpm <= 180; wpm += 10) {
+                select.innerHTML += `<option value="${wpm}">${wpm} WPM</option>`;
+            }
+            select.value = "80";
         }
-        select.value = "80";
+        // Page 5 speed
+        const selectP5 = document.getElementById('p5SpeedSelect');
+        if(selectP5) {
+            selectP5.innerHTML = '';
+            for (let wpm = 30; wpm <= 180; wpm += 10) {
+                selectP5.innerHTML += `<option value="${wpm}">${wpm} WPM</option>`;
+            }
+            selectP5.value = "80";
+        }
     }
 
     function populateWordLimitDropdown() {
+        // Page 4 word limit
         const select = document.getElementById('stenoWordLimitSelect');
-        select.innerHTML = '';
-        for (let w = 200; w <= 2000; w += 100) {
-            select.innerHTML += `<option value="${w}">${w} Words</option>`;
+        if(select) {
+            select.innerHTML = '';
+            for (let w = 200; w <= 2000; w += 100) {
+                select.innerHTML += `<option value="${w}">${w} Words</option>`;
+            }
+        }
+        // Page 5 word limit
+        const selectP5 = document.getElementById('p5WordLimitSelect');
+        if(selectP5) {
+            selectP5.innerHTML = '';
+            for (let w = 200; w <= 2000; w += 100) {
+                selectP5.innerHTML += `<option value="${w}">${w} Words</option>`;
+            }
         }
     }
 
     function loadStenoParagraphs() {
         const select = document.getElementById('stenoParaSelect');
+        if(!select) return;
         select.innerHTML = '<option value="">-- Choose Paragraph --</option>';
         paragraphs.filter(p => p.category === 'Hindi Steno').forEach(p => {
+            select.innerHTML += `<option value="${p.id}">${p.title}</option>`;
+        });
+    }
+
+    function loadP5Paragraphs() {
+        const select = document.getElementById('p5ParaSelect');
+        if(!select) return;
+        select.innerHTML = '<option value="">-- Choose Paragraph --</option>';
+        paragraphs.filter(p => p.category === 'Hindi Typing').forEach(p => {
             select.innerHTML += `<option value="${p.id}">${p.title}</option>`;
         });
     }
@@ -789,10 +849,24 @@
             currentActiveText = p.content;
             renderInteractiveWords(currentActiveText);
             
-            document.getElementById('p4DictationText').className = 'dictation-display-box font-mangal';
             const targetFont = p.font || 'font-mangal';
+            document.getElementById('p4DictationText').className = 'dictation-display-box ' + targetFont;
             document.getElementById('p4ReTypeArea').className = 'custom-editor ' + targetFont;
             document.getElementById('stenoFontSelect').value = targetFont;
+        }
+    }
+
+    function loadSelectedP5Para() {
+        const paraId = document.getElementById('p5ParaSelect').value;
+        const p = paragraphs.find(item => item.id.toString() === paraId.toString());
+        if (p) {
+            currentP5ActiveText = p.content;
+            renderP5InteractiveWords(currentP5ActiveText);
+            
+            const targetFont = p.font || 'font-mangal';
+            document.getElementById('p5DictationText').className = 'dictation-display-box ' + targetFont;
+            document.getElementById('p5TypingArea').className = 'custom-editor ' + targetFont;
+            document.getElementById('p5FontSelect').value = targetFont;
         }
     }
 
@@ -804,12 +878,29 @@
         }
     }
 
+    function applyWordLimitToP5Para() {
+        const limit = parseInt(document.getElementById('p5WordLimitSelect').value);
+        if (currentP5ActiveText) {
+            let words = currentP5ActiveText.trim().split(/\s+/).slice(0, limit);
+            renderP5InteractiveWords(words.join(' '));
+        }
+    }
+
     function renderInteractiveWords(text) {
         const container = document.getElementById('p4DictationText');
         container.innerHTML = '';
         currentWordsList = text.trim().split(/\s+/);
         currentWordsList.forEach((word, index) => {
             container.innerHTML += `<span id="word-${index}" class="steno-word">${word}</span> `;
+        });
+    }
+
+    function renderP5InteractiveWords(text) {
+        const container = document.getElementById('p5DictationText');
+        container.innerHTML = '';
+        currentP5WordsList = text.trim().split(/\s+/);
+        currentP5WordsList.forEach((word, index) => {
+            container.innerHTML += `<span id="p5-word-${index}" class="steno-word">${word}</span> `;
         });
     }
 
@@ -845,7 +936,42 @@
     function stopDictationAudio() {
         if (synth) synth.cancel();
         if (highlightInterval) clearInterval(highlightInterval);
-        document.querySelectorAll('.steno-word').forEach(el => el.classList.remove('highlight'));
+        document.querySelectorAll('#p4DictationText .steno-word').forEach(el => el.classList.remove('highlight'));
+    }
+
+    function startP5Audio() {
+        if (!currentP5ActiveText) { alert('Kripya pehle paragraph select karein!'); return; }
+        stopP5Audio();
+
+        let speedWpm = parseInt(document.getElementById('p5SpeedSelect').value) || 80;
+        let wordIntervalMs = (60 / speedWpm) * 1000;
+
+        p5SpeechUtterance = new SpeechSynthesisUtterance(currentP5ActiveText);
+        p5SpeechUtterance.lang = 'hi-IN';
+        p5SpeechUtterance.rate = Math.max(0.5, Math.min(3.0, speedWpm / 80));
+
+        let currentIndex = 0;
+        p5HighlightInterval = setInterval(() => {
+            document.querySelectorAll('#p5DictationText .steno-word').forEach(el => el.classList.remove('highlight'));
+            if (currentIndex < currentP5WordsList.length) {
+                let targetSpan = document.getElementById(`p5-word-${currentIndex}`);
+                if (targetSpan) {
+                    targetSpan.classList.add('highlight');
+                    targetSpan.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                currentIndex++;
+            } else {
+                clearInterval(p5HighlightInterval);
+            }
+        }, wordIntervalMs);
+
+        synth.speak(p5SpeechUtterance);
+    }
+
+    function stopP5Audio() {
+        if (synth) synth.cancel();
+        if (p5HighlightInterval) clearInterval(p5HighlightInterval);
+        document.querySelectorAll('#p5DictationText .steno-word').forEach(el => el.classList.remove('highlight'));
     }
 
     function calculateStenoAccuracy() {
@@ -865,6 +991,30 @@
 
         document.getElementById('p4ResultBox').classList.remove('hidden');
         document.getElementById('p4ResultDetails').innerHTML = `
+            <p><b>Total Words:</b> ${origWords.length}</p>
+            <p><b>Correct Words:</b> ${correctCount}</p>
+            <p><b>Mistakes:</b> ${mistakes}</p>
+            <p><b>Accuracy:</b> <span style="color: ${accuracy > 80 ? 'green' : 'red'}; font-weight:bold;">${accuracy}%</span></p>
+        `;
+    }
+
+    function calculateP5Accuracy() {
+        const originalText = currentP5WordsList.join(' ');
+        const typedText = document.getElementById('p5TypingArea').value.trim();
+
+        const origWords = originalText.split(/\s+/);
+        const userWords = typedText.split(/\s+/);
+
+        let correctCount = 0;
+        origWords.forEach((word, idx) => {
+            if (userWords[idx] === word) correctCount++;
+        });
+
+        let accuracy = origWords.length > 0 ? ((correctCount / origWords.length) * 100).toFixed(2) : 0;
+        let mistakes = Math.abs(origWords.length - correctCount);
+
+        document.getElementById('p5ResultBox').classList.remove('hidden');
+        document.getElementById('p5ResultDetails').innerHTML = `
             <p><b>Total Words:</b> ${origWords.length}</p>
             <p><b>Correct Words:</b> ${correctCount}</p>
             <p><b>Mistakes:</b> ${mistakes}</p>
