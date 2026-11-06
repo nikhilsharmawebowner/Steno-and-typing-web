@@ -144,7 +144,8 @@
     </div>
 
     <div class="task-bar-card">
-        <h3>Task Bar: Add Paragraph & Audio Link / Record</h3>
+        <h3 id="paraFormTitle">Task Bar: Add Paragraph & Audio Link / Record</h3>
+        <input type="hidden" id="editParagraphId" value="">
         <div class="form-grid" style="background: transparent; padding: 0;">
             <div>
                 <label>Category</label>
@@ -182,7 +183,8 @@
                 <textarea id="paraContent" class="custom-editor font-mangal" rows="4" placeholder="Type paragraph text here for backend evaluation..." onkeydown="handleKrutiDevEngine(event, 'ownerParaFontSelect', this)"></textarea>
             </div>
         </div>
-        <button class="btn-success" onclick="saveParagraph()">Save Paragraph & Audio</button>
+        <button id="saveParaBtn" class="btn-success" onclick="saveParagraph()">Save Paragraph & Audio</button>
+        <button id="cancelEditParaBtn" class="btn-warning hidden" style="margin-top:5px;" onclick="resetParagraphForm()">Cancel Edit</button>
 
         <h4 style="margin-top:20px;">Saved Paragraphs</h4>
         <table>
@@ -450,13 +452,13 @@
     let p5ElapsedSeconds = 0;
     let p5TestStarted = false;
 
-    // HELPER: CLEAN AND SPLIT WORDS ACCURATELY (FIXING WORD COUNT MISMATCH)
+    // HELPER: CLEAN AND SPLIT WORDS ACCURATELY
     function cleanAndSplitWords(text) {
         if (!text) return [];
         return text.trim().replace(/\s+/g, ' ').split(' ').filter(w => w.length > 0);
     }
 
-    // HARDCORE KRUTIDEV MAPPING ENGINE (FORCING ANUSVAAR 'M' ON 'A' KEY WHEN KRUTIDEV SELECTED)
+    // HARDCORE KRUTIDEV MAPPING ENGINE
     function handleKrutiDevEngine(e, selectId, element) {
         const fontVal = document.getElementById(selectId).value;
         if (fontVal === 'font-krutidev010' || fontVal === 'font-krutidev011' || fontVal === 'font-devlys') {
@@ -790,6 +792,7 @@
     }
 
     function saveParagraph() {
+        const editId = document.getElementById('editParagraphId').value;
         const cat = document.getElementById('paraCategory').value;
         const title = document.getElementById('paraTitle').value.trim();
         const content = document.getElementById('paraContent').value.trim();
@@ -798,21 +801,79 @@
 
         if (!title || !content) { alert('Title aur Content bharein!'); return; }
 
-        const newPara = { category: cat, title, content, audioUrl, font };
+        const paraData = { category: cat, title, content, audioUrl, font };
 
-        if (isFirebaseActive) {
-            db.collection("paragraphs").add(newPara).then(() => {
-                alert('Paragraph & Audio Live Database me save ho gaya![cite: 3]');
-            });
+        if (editId) {
+            // UPDATE EXISTING PARAGRAPH
+            if (isFirebaseActive) {
+                db.collection("paragraphs").doc(editId).update(paraData).then(() => {
+                    alert('Paragraph safaltapoorvak update ho gaya!');
+                    resetParagraphForm();
+                });
+            } else {
+                let p = paragraphs.find(item => item.id.toString() === editId.toString());
+                if (p) {
+                    Object.assign(p, paraData);
+                    localStorage.setItem('app_paragraphs', JSON.stringify(paragraphs));
+                    renderParagraphs();
+                    loadStenoParagraphs();
+                    loadP5Paragraphs();
+                    alert('Paragraph safaltapoorvak update ho gaya!');
+                    resetParagraphForm();
+                }
+            }
         } else {
-            newPara.id = Date.now().toString();
-            paragraphs.push(newPara);
-            localStorage.setItem('app_paragraphs', JSON.stringify(paragraphs));
-            renderParagraphs();
-            loadStenoParagraphs();
-            loadP5Paragraphs();
-            alert('Paragraph & Audio save ho gaya![cite: 3]');
+            // ADD NEW PARAGRAPH
+            if (isFirebaseActive) {
+                db.collection("paragraphs").add(paraData).then(() => {
+                    alert('Paragraph & Audio Live Database me save ho gaya![cite: 3]');
+                    resetParagraphForm();
+                });
+            } else {
+                paraData.id = Date.now().toString();
+                paragraphs.push(paraData);
+                localStorage.setItem('app_paragraphs', JSON.stringify(paragraphs));
+                renderParagraphs();
+                loadStenoParagraphs();
+                loadP5Paragraphs();
+                alert('Paragraph & Audio save ho gaya![cite: 3]');
+                resetParagraphForm();
+            }
         }
+    }
+
+    function editParagraph(id) {
+        const p = paragraphs.find(item => item.id.toString() === id.toString());
+        if (!p) return;
+
+        document.getElementById('editParagraphId').value = p.id;
+        document.getElementById('paraCategory').value = p.category;
+        document.getElementById('paraTitle').value = p.title;
+        document.getElementById('paraContent').value = p.content;
+        document.getElementById('paraAudioUrl').value = p.audioUrl || '';
+        document.getElementById('ownerParaFontSelect').value = p.font || 'font-mangal';
+        document.getElementById('paraContent').className = 'custom-editor ' + (p.font || 'font-mangal');
+
+        document.getElementById('paraFormTitle').innerText = 'Task Bar: Edit Paragraph & Audio';
+        document.getElementById('saveParaBtn').innerText = 'Update Paragraph';
+        document.getElementById('saveParaBtn').className = 'btn-warning';
+        document.getElementById('cancelEditParaBtn').classList.remove('hidden');
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function resetParagraphForm() {
+        document.getElementById('editParagraphId').value = '';
+        document.getElementById('paraTitle').value = '';
+        document.getElementById('paraContent').value = '';
+        document.getElementById('paraAudioUrl').value = '';
+        document.getElementById('recordedAudioPreview').style.display = 'none';
+        document.getElementById('recordingStatus').innerText = 'Status: Idle';
+
+        document.getElementById('paraFormTitle').innerText = 'Task Bar: Add Paragraph & Audio Link / Record';
+        document.getElementById('saveParaBtn').innerText = 'Save Paragraph & Audio';
+        document.getElementById('saveParaBtn').className = 'btn-success';
+        document.getElementById('cancelEditParaBtn').classList.add('hidden');
     }
 
     function renderParagraphs() {
@@ -824,7 +885,10 @@
                     <td>${p.category}</td>
                     <td>${p.title}</td>
                     <td><small>${p.audioUrl ? 'Audio Attached/Recorded' : 'No Audio'}</small></td>
-                    <td><button class="btn-danger" onclick="deleteParagraph('${p.id}')">Remove</button></td>
+                    <td>
+                        <button class="btn-warning" style="padding: 3px 8px; font-size: 11px; margin-bottom: 4px;" onclick="editParagraph('${p.id}')">Edit</button><br>
+                        <button class="btn-danger" style="padding: 3px 8px; font-size: 11px;" onclick="deleteParagraph('${p.id}')">Remove</button>
+                    </td>
                 </tr>
             `;
         });
